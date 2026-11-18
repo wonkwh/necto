@@ -8,6 +8,10 @@ on:
       - "WebPackages/Bridge/theme.css"
       - ".github/workflows/windows.yml"
   push:
+    branches: ["**"]
+    # A windows-v<version> tag also publishes a GitHub release. Paths are not
+    # checked for tags.
+    tags: ["windows-v*"]
     paths:
       - "NectoWindows/**"
       - "WebPackages/Bridge/theme.css"
@@ -37,6 +41,16 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22.12.0
+      # The tag names the release version; other builds keep the one in tauri.conf.json.
+      - name: Read the version
+        shell: pwsh
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          $version = (Get-Content tauri.conf.json -Raw | ConvertFrom-Json).version
+          if ($env:REF -like 'refs/tags/windows-v*') { $version = $env:REF.Substring('refs/tags/windows-v'.Length) }
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "'$version' is not a version such as 0.1.0" }
+          "VERSION=$version" >> $env:GITHUB_ENV
       - name: Show Rust version
         run: cargo --version
       - name: Test
@@ -53,7 +67,8 @@ jobs:
           New-Item -ItemType Directory -Force binaries | Out-Null
           Copy-Item target/release/necto-cli.exe binaries/necto-cli-x86_64-pc-windows-msvc.exe
       - name: Build the installer
-        run: npx --yes @tauri-apps/cli@2 build --config tauri.bundle.conf.json
+        shell: pwsh
+        run: npx --yes @tauri-apps/cli@2 build --config tauri.bundle.conf.json --config "{`"version`":`"$env:VERSION`"}"
       - name: Install, call and uninstall
         shell: pwsh
         run: ../script/check-installer.ps1
@@ -65,3 +80,44 @@ jobs:
             NectoWindows/src-tauri/target/release/necto-cli.exe
           if-no-files-found: error
           retention-days: 7
+
+  release:
+    name: GitHub Release
+    needs: windows
+    if: startsWith(github.ref, 'refs/tags/windows-v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: necto-windows
+          path: built
+      - name: Name the assets
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#windows-v}"
+          mkdir dist
+          cp built/bundle/nsis/*-setup.exe "dist/Necto-$version-windows-x64-setup.exe"
+          cp built/necto-cli.exe "dist/necto-cli-$version-windows-x64.exe"
+          (cd dist && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt)
+      # A prerelease until the client has been checked on a Windows PC with a phone.
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#windows-v}"
+          cat > notes.md <<EOF
+          Necto for Windows $version: reads Android apps over adb and shows the panels they carry.
+
+          - \`Necto-$version-windows-x64-setup.exe\` installs for the current user into \`%LOCALAPPDATA%\\Necto\` and puts \`necto-cli\` on PATH.
+          - \`necto-cli-$version-windows-x64.exe\` is the same CLI on its own.
+          - Needs the Android SDK platform tools (\`adb\`) and an app with the Necto Android SDK in a debug build.
+
+          iOS apps are read with Necto for Mac.
+          EOF
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag --prerelease \
+            --title "Necto for Windows $version" --notes-file notes.md

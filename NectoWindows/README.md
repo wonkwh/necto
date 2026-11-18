@@ -61,6 +61,17 @@ and puts that folder on the user's PATH; uninstalling takes it off again
 installing. CI installs, calls and uninstalls each build with
 [script/check-installer.ps1](script/check-installer.ps1).
 
+## Release
+
+Pushing a `windows-v<version>` tag builds, tests and checks the installer as above,
+then publishes a GitHub prerelease with the installer, `necto-cli` and
+`SHA256SUMS.txt`. The tag sets the version; `tauri.conf.json` is not edited.
+
+```sh
+git tag windows-v0.1.0
+git push origin windows-v0.1.0
+```
+
 ## Not yet
 
 Plugin installation, desktop plugins, shell access, settings and localization of the
