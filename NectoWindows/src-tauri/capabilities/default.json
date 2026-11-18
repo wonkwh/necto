@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "The shell window. Panels run in sandboxed iframes and never reach IPC.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

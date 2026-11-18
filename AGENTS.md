@@ -34,6 +34,7 @@ SDK/Android/                     Kotlin bridge and sample app, built by Gradle
 SDK/Plugins/<Name>/              One plugin: Panel/ is the built panel, iOS/ the Swift sources, Android/ the Gradle module
 Necto/                    macOS shell, built by Necto.xcodeproj
 ExampleApp/              iOS sample app, built by Necto.xcodeproj
+NectoWindows/            Tauri v2 host for Windows, Android only so far; built by Cargo
 WebPackages/BuiltInPlugins/          src/ is source, Plugins/ is the committed build output
 WebPackages/Bridge/               @necto/bridge, the plugin facing web library
 ```

@@ -1,0 +1,101 @@
+/*
+ * Copyright (c) 2026 Viva Republica, Inc.
+ *
+ * Colours and sizes come from WebPackages/Bridge/theme.css, served at /theme.css.
+ */
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  background: var(--necto-bg);
+  color: var(--necto-text);
+  font-family: var(--necto-font-ui);
+  font-size: var(--necto-size-body);
+}
+
+#sidebar {
+  overflow-y: auto;
+  padding: var(--necto-space-2);
+  background: var(--necto-sidebar);
+  border-right: 1px solid var(--necto-border);
+}
+
+.app {
+  display: flex;
+  align-items: center;
+  gap: var(--necto-space-2);
+  padding: var(--necto-space-3) var(--necto-space-2) var(--necto-space-1);
+}
+
+.app img {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--necto-radius-control);
+}
+
+.app strong {
+  display: block;
+  font-size: var(--necto-size-label);
+}
+
+.app small {
+  display: block;
+  color: var(--necto-text-secondary);
+  font-size: var(--necto-size-caption);
+}
+
+.plugin {
+  display: block;
+  width: 100%;
+  height: var(--necto-row-height);
+  padding: 0 var(--necto-space-3);
+  border: 0;
+  border-radius: var(--necto-radius-control);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.plugin:hover {
+  background: var(--necto-hover);
+}
+
+.plugin[aria-current="true"] {
+  background: var(--necto-selected);
+}
+
+.plugin:focus-visible {
+  outline: 2px solid var(--necto-focus-ring);
+}
+
+.waiting {
+  padding: 0 var(--necto-space-3);
+  color: var(--necto-text-tertiary);
+  font-size: var(--necto-size-caption);
+}
+
+#panes {
+  position: relative;
+  min-width: 0;
+}
+
+#panes iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+#empty {
+  margin: 0;
+  padding: var(--necto-space-5);
+  color: var(--necto-text-secondary);
+}
