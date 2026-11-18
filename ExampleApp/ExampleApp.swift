@@ -5,8 +5,10 @@
 import NectoFilesPlugin
 import NectoPreferencesPlugin
 import NectoSDK
+import NectoSQLitePlugin
 import NectoUIControlPlugin
 import NectoURLSessionCapturePlugin
+import SQLite3
 import SwiftUI
 
 /// Verifies SDK connection and plugin behaviour on a device or a simulator.
@@ -35,9 +37,11 @@ struct ExampleApp: App {
         // both panels something real to show on a fresh install.
         NectoSDK.register(NectoPreferencesPlugin())
         NectoSDK.register(NectoFilesPlugin())
+        NectoSDK.register(NectoSQLitePlugin())
         NectoSDK.register(NectoUIControlPlugin())
         Self.seedPreferences()
         Self.seedFiles()
+        Self.seedDatabase()
 
         NectoSDK.start()
         ExampleTelemetry.start()
@@ -67,6 +71,25 @@ struct ExampleApp: App {
         """.utf8).write(to: receipts.appending(path: "2026-07-29.json"))
         try? Data("Notes the app wrote for itself.\n".utf8).write(to: documents.appending(path: "notes.txt"))
         try? Data((0 ..< 512).map { UInt8($0 % 251) }).write(to: documents.appending(path: "cache.bin"))
+    }
+
+    /// A small database for the SQLite panel, written once.
+    private static func seedDatabase() {
+        guard let library = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first else {
+            return
+        }
+        let url = library.appending(path: "orders.sqlite")
+        guard !FileManager.default.fileExists(atPath: url.path) else { return }
+
+        var handle: OpaquePointer?
+        guard sqlite3_open(url.path, &handle) == SQLITE_OK else { return }
+        defer { sqlite3_close(handle) }
+        sqlite3_exec(handle, """
+        CREATE TABLE orders (id INTEGER PRIMARY KEY, item TEXT NOT NULL, total INTEGER, note TEXT);
+        INSERT INTO orders (item, total, note) VALUES
+          ('Coffee beans', 18900, NULL), ('Filter papers', 4500, 'gift'), ('Kettle', 59000, NULL);
+        CREATE VIEW large_orders AS SELECT * FROM orders WHERE total >= 10000;
+        """, nil, nil, nil)
     }
 
     /// One key of each shape a real app stores, plus a counter that actually counts.

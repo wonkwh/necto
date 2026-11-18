@@ -1005,6 +1005,50 @@ document.getElementById("files").innerHTML = `
     </aside>
   </div>`;
 
+const sqliteTables = [
+  { name: "large_orders", meta: "view" },
+  { name: "orders", meta: "3", on: true },
+];
+
+document.getElementById("sqlite").innerHTML = `
+  <div class="necto-toolbar">
+    <select class="necto-field" style="flex:0 1 360px; max-width:360px" aria-label="Database">
+      <option>Library/orders.sqlite</option>
+    </select>
+    <button type="button" class="necto-button necto-button-quiet">Refresh</button>
+    <span class="necto-caption">12.0 kB · modified 2026-07-29 16:38:02</span>
+  </div>
+  <div style="display:grid; grid-template-columns:220px 1fr; height:320px">
+    <div style="overflow:auto; border-right:1px solid var(--necto-border)">
+      <nav class="necto-tree">${sqliteTables.map((t) => `
+        <button type="button" class="necto-tree-row" aria-selected="${Boolean(t.on)}">
+          <span class="necto-tree-twist"></span>
+          <span class="necto-tree-name">${t.name}</span>
+          <span class="necto-tree-meta">${t.meta}</span>
+        </button>`).join("")}</nav>
+    </div>
+    <section style="display:grid; grid-template-rows:auto 1fr; min-width:0">
+      <div style="display:grid; gap:var(--necto-space-2); padding:var(--necto-space-2); border-bottom:1px solid var(--necto-border)">
+        <textarea class="necto-field" style="height:84px; font-family:var(--necto-font-mono)" aria-label="SQL">SELECT * FROM "orders"</textarea>
+        <div style="display:flex; gap:var(--necto-space-2); align-items:center">
+          <button type="button" class="necto-button necto-button-primary">Run</button>
+          <select class="necto-field" style="width:auto" aria-label="Row limit"><option>200 rows</option></select>
+          <span class="necto-caption">3 rows · 1 ms</span>
+        </div>
+      </div>
+      <div style="overflow:auto">
+        <table class="necto-table" style="font-family:var(--necto-font-mono)">
+          <thead><tr><th>id</th><th>item</th><th>total</th><th>note</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Coffee beans</td><td>18900</td><td style="color:var(--necto-text-secondary); font-style:italic">NULL</td></tr>
+            <tr><td>2</td><td>Filter papers</td><td>4500</td><td>gift</td></tr>
+            <tr><td>3</td><td>Kettle</td><td>59000</td><td style="color:var(--necto-text-secondary); font-style:italic">NULL</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>`;
+
 document.getElementById("control").innerHTML = `
   <div class="necto-tabs">
     <button type="button" class="necto-tab" aria-selected="true">Actions</button>

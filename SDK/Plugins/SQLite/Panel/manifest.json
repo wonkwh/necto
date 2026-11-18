@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 1,
+  "id": "sqlite",
+  "name": "SQLite",
+  "description": "SQLite databases in the app sandbox, read-only",
+  "version": "0.1.0",
+  "author": "Necto",
+  "icon": {
+    "systemName": "cylinder.split.1x2"
+  },
+  "assets": [
+    "index.html",
+    "assets"
+  ],
+  "allowedOrigins": [
+    "self"
+  ],
+  "operations": [
+    {
+      "id": "sqlite.databases",
+      "title": "List databases",
+      "description": "SQLite files under the app home",
+      "kind": "once",
+      "binding": {
+        "name": "necto.device.sqlite.databases",
+        "version": 1
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "databases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "modifiedAt": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "path",
+                "name",
+                "size",
+                "modifiedAt"
+              ],
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "databases"
+        ],
+        "additionalProperties": true
+      },
+      "timeoutMs": 10000
+    },
+    {
+      "id": "sqlite.tables",
+      "title": "List tables",
+      "description": "Tables and views with their schema; row counts for tables",
+      "kind": "once",
+      "binding": {
+        "name": "necto.device.sqlite.tables",
+        "version": 1
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "database": {
+            "type": "string",
+            "description": "Path relative to the app home, from sqlite.databases"
+          }
+        },
+        "required": [
+          "database"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "tables": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "table",
+                    "view"
+                  ]
+                },
+                "sql": {
+                  "type": "string"
+                },
+                "rowCount": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "name",
+                "kind",
+                "sql"
+              ],
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "tables"
+        ],
+        "additionalProperties": true
+      },
+      "timeoutMs": 30000
+    },
+    {
+      "id": "sqlite.query",
+      "title": "Run query",
+      "description": "Runs one read-only statement; writes are refused",
+      "kind": "once",
+      "binding": {
+        "name": "necto.device.sqlite.query",
+        "version": 1
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "database": {
+            "type": "string",
+            "description": "Path relative to the app home, from sqlite.databases"
+          },
+          "sql": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5000
+          }
+        },
+        "required": [
+          "database",
+          "sql"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "elapsedMs": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "columns",
+          "rows",
+          "truncated",
+          "elapsedMs"
+        ],
+        "additionalProperties": true
+      },
+      "timeoutMs": 30000
+    }
+  ]
+}

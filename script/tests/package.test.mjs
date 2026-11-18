@@ -39,7 +39,7 @@ function closure(name) {
 }
 
 const plugins = ["NectoNetworkPlugin", "NectoEventsPlugin", "NectoFilesPlugin",
-  "NectoPreferencesPlugin", "NectoPerformancePlugin", "NectoUIControlPlugin"];
+  "NectoPreferencesPlugin", "NectoPerformancePlugin", "NectoUIControlPlugin", "NectoSQLitePlugin"];
 
 test("every plugin is independently selectable without sibling plugins", () => {
   for (const name of plugins) {

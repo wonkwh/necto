@@ -52,6 +52,7 @@ for a complete implementation.
 | `NectoNetworkPlugin` | Report requests from your own networking hooks | No |
 | `NectoEventsPlugin` | Application events | No |
 | `NectoFilesPlugin` | Files | No |
+| `NectoSQLitePlugin` | SQLite databases, read-only | No |
 | `NectoPreferencesPlugin` | Preferences | No |
 | `NectoPerformancePlugin` | Report performance readings | No |
 | `NectoProcessMetricPlugin` | Automatic process metrics | No |

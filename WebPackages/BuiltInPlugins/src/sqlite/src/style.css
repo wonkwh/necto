@@ -1,0 +1,88 @@
+/*
+ * Copyright (c) 2026 Viva Republica, Inc.
+ *
+ * Layout only. Everything else comes from @necto/bridge/components.css.
+ */
+
+@import "@necto/bridge/theme.css";
+@import "@necto/bridge/components.css";
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+#root > .necto-app {
+  height: 100%;
+}
+
+.sqlite-database {
+  flex: 0 1 360px;
+  max-width: 360px;
+}
+
+.sqlite-main {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 0;
+  padding: 0;
+}
+
+.sqlite-tables {
+  overflow: auto;
+  border-right: 1px solid var(--necto-border);
+}
+
+.sqlite-work {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  min-height: 0;
+}
+
+.sqlite-editor {
+  display: grid;
+  gap: var(--necto-space-2);
+  padding: var(--necto-space-2);
+  border-bottom: 1px solid var(--necto-border);
+}
+
+.sqlite-sql {
+  height: 84px;
+  resize: vertical;
+  font-family: var(--necto-font-mono);
+}
+
+.sqlite-actions {
+  display: flex;
+  gap: var(--necto-space-2);
+  align-items: center;
+}
+
+.sqlite-limit {
+  width: auto;
+}
+
+.sqlite-result {
+  overflow: auto;
+  min-height: 0;
+}
+
+.sqlite-result .necto-table td,
+.sqlite-result .necto-table th {
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--necto-font-mono);
+}
+
+.sqlite-null {
+  color: var(--necto-text-secondary);
+  font-style: italic;
+}
+
+.sqlite-error {
+  margin: var(--necto-space-3);
+}
