@@ -2,7 +2,8 @@
 //  Copyright (c) 2026 Viva Republica, Inc.
 //
 
-//! Connected apps, the contracts they registered, and the calls panels make against them.
+//! Connected apps, the contracts they registered, and the calls panels and the CLI make
+//! against them. Both callers go through the same resolve and validation.
 
 use crate::panels::Panel;
 use crate::schema;
@@ -18,6 +19,9 @@ use tokio::net::TcpStream;
 use tokio::sync::{mpsc, oneshot};
 
 const PANEL_FETCH: (&str, i64) = ("necto.device.plugins.assets", 1);
+
+/// Receives a stream's `event`, `error` and `end`, in that order of possibility.
+pub type Sink = Arc<dyn Fn(&str, Value) + Send + Sync>;
 
 pub struct Registry {
     shell: AppHandle,
@@ -43,15 +47,20 @@ struct App {
 
 enum Pending {
     Once { handle: String, reply: oneshot::Sender<Result<Value, Value>> },
-    Stream { handle: String, plugin: String, subscription: String, operation: Value },
+    /// `key` names the stream for its owner: a panel subscription or a control request.
+    Stream { handle: String, key: String, operation: Value, sink: Sink },
 }
 
-fn bridge_error(code: &str, message: impl Into<String>, operation: Option<&str>) -> Value {
+pub fn bridge_error(code: &str, message: impl Into<String>, operation: Option<&str>) -> Value {
     let mut error = json!({ "code": code, "message": message.into() });
     if let Some(operation) = operation {
         error["operationID"] = json!(operation);
     }
     error
+}
+
+fn input_of(message: &Value) -> Value {
+    message.get("input").filter(|i| !i.is_null()).cloned().unwrap_or_else(|| json!({}))
 }
 
 impl Registry {
@@ -65,11 +74,6 @@ impl Registry {
 
     fn changed(&self) {
         let _ = self.shell.emit("necto://targets", ());
-    }
-
-    fn emit_stream(&self, handle: &str, plugin: &str, subscription: &str, kind: &str, payload: Value) {
-        let message = json!({ "handle": handle, "plugin": plugin, "subscriptionID": subscription, "kind": kind, "payload": payload });
-        let _ = self.shell.emit("necto://stream", message);
     }
 
     /// Runs one connection from handshake to close.
@@ -136,7 +140,7 @@ impl Registry {
         let registry = Arc::clone(self);
         let handle = handle.to_string();
         tauri::async_runtime::spawn(async move {
-            let fetched = registry.call(&handle, PANEL_FETCH.0, PANEL_FETCH.1, "once", json!({ "pluginID": plugin }), 30_000).await;
+            let fetched = registry.call(&handle, PANEL_FETCH.0, PANEL_FETCH.1, json!({ "pluginID": plugin }), 30_000).await;
             let panel = fetched.map_err(|e| e.to_string()).and_then(|archive| Panel::decode(&archive, &stamp));
             match panel {
                 Ok(panel) => {
@@ -150,12 +154,12 @@ impl Registry {
         });
     }
 
-    /// Sends one `plugin.invoke` and waits for its single result.
-    async fn call(&self, handle: &str, name: &str, version: i64, kind: &str, input: Value, timeout_ms: u64) -> Result<Value, Value> {
+    /// Sends one `once` invocation and waits for its single result.
+    async fn call(&self, handle: &str, name: &str, version: i64, input: Value, timeout_ms: u64) -> Result<Value, Value> {
         let request = uuid::Uuid::new_v4().to_string();
         let (reply, answer) = oneshot::channel();
         self.state().pending.insert(request.clone(), Pending::Once { handle: handle.into(), reply });
-        let invocation = json!({ "requestID": request, "name": name, "version": version, "kind": kind, "input": input });
+        let invocation = json!({ "requestID": request, "name": name, "version": version, "kind": "once", "input": input });
         if !self.send(handle, "plugin.invoke", invocation) {
             self.state().pending.remove(&request);
             return Err(bridge_error("TARGET_DISCONNECTED", "The app is not connected", None));
@@ -183,37 +187,37 @@ impl Registry {
         let is_final = result["isFinal"].as_bool().unwrap_or(true);
 
         let mut state = self.state();
-        match state.pending.get(request) {
-            Some(Pending::Once { handle: owner, .. }) if owner == handle => {
-                let Some(Pending::Once { reply, .. }) = state.pending.remove(request) else { return };
-                let _ = reply.send(match error {
-                    Some(error) => Err(error),
-                    None => Ok(output.unwrap_or_else(|| json!({}))),
-                });
-            }
-            Some(Pending::Stream { handle: owner, plugin, subscription, operation }) if owner == handle => {
-                let (plugin, subscription) = (plugin.clone(), subscription.clone());
-                if let (Some(event), false) = (&output, is_final) {
-                    let invalid = schema::validate(event, &operation["outputSchema"]);
-                    let operation_id = operation["id"].as_str().unwrap_or_default().to_string();
-                    if invalid.is_none() {
-                        drop(state);
-                        return self.emit_stream(handle, &plugin, &subscription, "event", event.clone());
-                    }
-                    state.pending.remove(request);
+        let owned = match state.pending.get(request) {
+            Some(Pending::Once { handle: h, .. } | Pending::Stream { handle: h, .. }) => h == handle,
+            None => false,
+        };
+        if !owned {
+            return;
+        }
+        if let Some(Pending::Stream { operation, sink, .. }) = state.pending.get(request) {
+            let (operation, sink) = (operation.clone(), sink.clone());
+            if let (Some(event), false) = (output, is_final) {
+                let Some(invalid) = schema::validate(&event, &operation["outputSchema"]) else {
                     drop(state);
-                    self.send(handle, "plugin.cancel", json!({ "requestID": request }));
-                    let error = bridge_error("INVALID_OUTPUT", invalid.unwrap_or_default(), Some(&operation_id));
-                    return self.emit_stream(handle, &plugin, &subscription, "error", error);
-                }
+                    return sink("event", event);
+                };
                 state.pending.remove(request);
                 drop(state);
-                match error {
-                    Some(error) => self.emit_stream(handle, &plugin, &subscription, "error", error),
-                    None => self.emit_stream(handle, &plugin, &subscription, "end", Value::Null),
-                }
+                self.send(handle, "plugin.cancel", json!({ "requestID": request }));
+                return sink("error", bridge_error("INVALID_OUTPUT", invalid, operation["id"].as_str()));
             }
-            _ => {}
+            state.pending.remove(request);
+            drop(state);
+            return match error {
+                Some(error) => sink("error", error),
+                None => sink("end", Value::Null),
+            };
+        }
+        if let Some(Pending::Once { reply, .. }) = state.pending.remove(request) {
+            let _ = reply.send(match error {
+                Some(error) => Err(error),
+                None => Ok(output.unwrap_or_else(|| json!({}))),
+            });
         }
     }
 
@@ -233,7 +237,7 @@ impl Registry {
             let error = bridge_error("TARGET_DISCONNECTED", message.clone(), None);
             match pending {
                 Pending::Once { reply, .. } => drop(reply.send(Err(error))),
-                Pending::Stream { plugin, subscription, .. } => self.emit_stream(handle, &plugin, &subscription, "error", error),
+                Pending::Stream { sink, .. } => sink("error", error),
             }
         }
         self.changed();
@@ -275,13 +279,34 @@ impl Registry {
 
     /// Answers one request from a panel with `{ok, value}` or `{ok: false, error}`.
     pub async fn request(self: &Arc<Self>, handle: &str, plugin: &str, message: Value) -> Value {
+        let operation = message["operationID"].as_str();
         let result = match message["type"].as_str().unwrap_or_default() {
             "context" => self.context(handle, plugin),
             "ready" => Ok(Value::Null),
-            "invoke" => self.invoke(handle, plugin, &message).await,
-            "subscribe" => self.subscribe(handle, plugin, &message),
+            "invoke" => match operation {
+                Some(operation) => self.invoke(handle, plugin, operation, input_of(&message)).await,
+                None => Err(bridge_error("INVALID_INPUT", "operationID is missing", None)),
+            },
+            "subscribe" => match operation {
+                Some(operation) => {
+                    let subscription = {
+                        let mut state = self.state();
+                        state.next_subscription += 1;
+                        format!("s{}", state.next_subscription)
+                    };
+                    let (shell, handle_, plugin_, subscription_) = (self.shell.clone(), handle.to_string(), plugin.to_string(), subscription.clone());
+                    let sink: Sink = Arc::new(move |kind, payload| {
+                        let message = json!({ "handle": handle_, "plugin": plugin_, "subscriptionID": subscription_, "kind": kind, "payload": payload });
+                        let _ = shell.emit("necto://stream", message);
+                    });
+                    let key = format!("panel:{handle}:{plugin}:{subscription}");
+                    self.subscribe(handle, plugin, operation, input_of(&message), key, sink).map(|_| json!(subscription))
+                }
+                None => Err(bridge_error("INVALID_INPUT", "operationID is missing", None)),
+            },
             "unsubscribe" => {
-                self.unsubscribe(handle, plugin, message["subscriptionID"].as_str().unwrap_or_default());
+                let subscription = message["subscriptionID"].as_str().unwrap_or_default();
+                self.cancel_streams(|key| key == format!("panel:{handle}:{plugin}:{subscription}"));
                 Ok(Value::Null)
             }
             other => Err(bridge_error("OPERATION_NOT_FOUND", format!("Unknown request '{other}'"), None)),
@@ -346,9 +371,8 @@ impl Registry {
         }))
     }
 
-    /// The manifest operation behind a panel call, checked for kind, availability and input.
-    fn resolve(&self, handle: &str, plugin: &str, message: &Value, kind: &str) -> Result<Value, Value> {
-        let operation_id = message["operationID"].as_str().ok_or_else(|| bridge_error("INVALID_INPUT", "operationID is missing", None))?;
+    /// The manifest operation behind a call, checked for kind, availability and input.
+    fn resolve(&self, handle: &str, plugin: &str, operation_id: &str, input: &Value, kind: &str) -> Result<Value, Value> {
         let fail = |code: &str, text: String| bridge_error(code, text, Some(operation_id));
         let state = self.state();
         let app = state.apps.get(handle).ok_or_else(|| fail("TARGET_DISCONNECTED", "The app is not connected".into()))?;
@@ -361,65 +385,146 @@ impl Registry {
         if let Some((code, reason)) = Self::unavailable(app, operation) {
             return Err(fail(code, reason));
         }
-        let input = message.get("input").cloned().unwrap_or_else(|| json!({}));
-        if let Some(failure) = schema::validate(&input, &operation["inputSchema"]) {
+        if let Some(failure) = schema::validate(input, &operation["inputSchema"]) {
             return Err(fail("INVALID_INPUT", failure));
         }
         Ok(operation.clone())
     }
 
-    async fn invoke(&self, handle: &str, plugin: &str, message: &Value) -> Result<Value, Value> {
-        let operation = self.resolve(handle, plugin, message, "once")?;
-        let id = operation["id"].as_str().unwrap_or_default();
+    pub async fn invoke(&self, handle: &str, plugin: &str, operation_id: &str, input: Value) -> Result<Value, Value> {
+        let operation = self.resolve(handle, plugin, operation_id, &input, "once")?;
         let binding = &operation["binding"];
-        let input = message.get("input").cloned().unwrap_or_else(|| json!({}));
         let timeout = operation["timeoutMs"].as_u64().unwrap_or(0);
-        let tag = |mut error: Value| {
-            error["operationID"] = json!(id);
+        let name = binding["name"].as_str().unwrap_or_default();
+        let output = self.call(handle, name, binding["version"].as_i64().unwrap_or(1), input, timeout).await.map_err(|mut error| {
+            error["operationID"] = json!(operation_id);
             error
-        };
-        let output = self
-            .call(handle, binding["name"].as_str().unwrap_or_default(), binding["version"].as_i64().unwrap_or(1), "once", input, timeout)
-            .await
-            .map_err(tag)?;
+        })?;
         match schema::validate(&output, &operation["outputSchema"]) {
             None => Ok(output),
-            Some(failure) => Err(bridge_error("INVALID_OUTPUT", failure, Some(id))),
+            Some(failure) => Err(bridge_error("INVALID_OUTPUT", failure, Some(operation_id))),
         }
     }
 
-    fn subscribe(&self, handle: &str, plugin: &str, message: &Value) -> Result<Value, Value> {
-        let operation = self.resolve(handle, plugin, message, "stream")?;
+    /// Starts a stream whose messages go to `sink` until it ends or `key` is cancelled.
+    pub fn subscribe(&self, handle: &str, plugin: &str, operation_id: &str, input: Value, key: String, sink: Sink) -> Result<(), Value> {
+        let operation = self.resolve(handle, plugin, operation_id, &input, "stream")?;
         let binding = operation["binding"].clone();
         let request = uuid::Uuid::new_v4().to_string();
-        let subscription = {
-            let mut state = self.state();
-            state.next_subscription += 1;
-            let subscription = format!("s{}", state.next_subscription);
-            let pending = Pending::Stream { handle: handle.into(), plugin: plugin.into(), subscription: subscription.clone(), operation };
-            state.pending.insert(request.clone(), pending);
-            subscription
-        };
-        let input = message.get("input").cloned().unwrap_or_else(|| json!({}));
+        let pending = Pending::Stream { handle: handle.into(), key, operation, sink };
+        self.state().pending.insert(request.clone(), pending);
         let invocation = json!({ "requestID": request, "name": binding["name"], "version": binding["version"], "kind": "stream", "input": input });
         if !self.send(handle, "plugin.invoke", invocation) {
             self.state().pending.remove(&request);
-            return Err(bridge_error("TARGET_DISCONNECTED", "The app is not connected", message["operationID"].as_str()));
+            return Err(bridge_error("TARGET_DISCONNECTED", "The app is not connected", Some(operation_id)));
         }
-        Ok(json!(subscription))
+        Ok(())
     }
 
-    fn unsubscribe(&self, handle: &str, plugin: &str, subscription: &str) {
-        let request = {
+    /// Stops every stream whose key matches, telling each app to stop too. The sinks hear nothing.
+    pub fn cancel_streams(&self, matches: impl Fn(&str) -> bool) {
+        let stopped: Vec<(String, String)> = {
             let mut state = self.state();
-            let found = state.pending.iter().find_map(|(id, p)| match p {
-                Pending::Stream { handle: h, plugin: p, subscription: s, .. } if h == handle && p == plugin && s == subscription => Some(id.clone()),
-                _ => None,
-            });
-            found.inspect(|id| drop(state.pending.remove(id)))
+            let ids: Vec<String> = state
+                .pending
+                .iter()
+                .filter(|(_, p)| matches!(p, Pending::Stream { key, .. } if matches(key)))
+                .map(|(id, _)| id.clone())
+                .collect();
+            ids.into_iter()
+                .filter_map(|id| match state.pending.remove(&id) {
+                    Some(Pending::Stream { handle, .. }) => Some((handle, id)),
+                    _ => None,
+                })
+                .collect()
         };
-        if let Some(request) = request {
-            self.send(handle, "plugin.cancel", json!({ "requestID": request }));
+        for (handle, request) in stopped {
+            self.send(&handle, "plugin.cancel", json!({ "requestID": request }));
         }
+    }
+
+    // MARK: Control queries, in the shape docs/control-socket.md gives them
+
+    /// `deviceID` is the adb serial: the CLI is the user's own tool, not a plugin.
+    pub fn control_targets(&self) -> Value {
+        let state = self.state();
+        let mut targets: Vec<Value> = state
+            .apps
+            .values()
+            .map(|app| {
+                json!({
+                    "appBundleID": app.hello.app_bundle_id,
+                    "appName": app.hello.app_name,
+                    "deviceID": app.serial,
+                    "deviceName": app.hello.device_name,
+                })
+            })
+            .collect();
+        targets.sort_by_key(|t| (t["deviceID"].as_str().unwrap_or_default().to_string(), t["appBundleID"].as_str().unwrap_or_default().to_string()));
+        json!({ "targets": targets })
+    }
+
+    /// The handle of the one app `app` on device `device`.
+    pub fn control_target(&self, device: &str, app: &str) -> Result<String, Value> {
+        let state = self.state();
+        let matches: Vec<&String> = state.apps.iter().filter(|(_, a)| a.serial == device && a.hello.app_bundle_id == app).map(|(h, _)| h).collect();
+        match matches[..] {
+            [handle] => Ok(handle.clone()),
+            _ => Err(bridge_error("TARGET_DISCONNECTED", format!("No unique connected app '{app}' on device '{device}'. Run necto device list."), None)),
+        }
+    }
+
+    /// Discovery: plugins in a scope, one plugin's operations, or one operation's schemas.
+    /// `handle` is `None` for the desktop scope, which holds no plugins in this Necto.
+    pub fn control_plugins(&self, handle: Option<&str>, plugin: Option<&str>, operation: Option<&str>) -> Result<Value, Value> {
+        if operation.is_some() && plugin.is_none() {
+            return Err(bridge_error("INVALID_INPUT", "An operation ID requires a plugin ID.", None));
+        }
+        let state = self.state();
+        let app = handle.and_then(|h| state.apps.get(h));
+        let mut result = json!({
+            "scope": if handle.is_some() { "device" } else { "desktop" },
+            "target": app.map(|a| json!({ "deviceID": a.serial, "appBundleID": a.hello.app_bundle_id })),
+        });
+        let metadata = |id: &str, panel: &Panel| {
+            json!({ "id": id, "name": panel.name(), "version": panel.manifest["version"], "description": panel.manifest["description"] })
+        };
+        let mut panels: Vec<(&String, &Arc<Panel>)> = app.map(|a| a.panels.iter().collect()).unwrap_or_default();
+        panels.sort_by(|a, b| a.0.cmp(b.0));
+        let Some(plugin_id) = plugin else {
+            result["plugins"] = json!(panels.iter().map(|(id, p)| metadata(id, p)).collect::<Vec<_>>());
+            return Ok(result);
+        };
+        let (Some(app), Some((_, panel))) = (app, panels.iter().find(|(id, _)| *id == plugin_id)) else {
+            return Err(bridge_error("OPERATION_NOT_FOUND", format!("No plugin '{plugin_id}' in this scope. Run plugin list with the same target flags."), None));
+        };
+        let info = |op: &Value, schemas: bool| {
+            let mut entry = json!({
+                "id": op["id"], "title": op["title"], "description": op["description"], "kind": op["kind"],
+                "timeoutMs": op["timeoutMs"].as_u64().unwrap_or(0),
+            });
+            let failure = Self::unavailable(app, op);
+            entry["available"] = json!(failure.is_none());
+            if let Some((_, reason)) = failure {
+                entry["unavailableReason"] = json!(reason);
+            }
+            if schemas {
+                entry["inputSchema"] = op["inputSchema"].clone();
+                entry["outputSchema"] = op["outputSchema"].clone();
+            }
+            entry
+        };
+        let mut detail = metadata(plugin_id, panel);
+        match operation {
+            Some(operation_id) => {
+                let op = panel.operation(operation_id).ok_or_else(|| {
+                    bridge_error("OPERATION_NOT_FOUND", format!("No operation '{operation_id}' in '{plugin_id}'. Read plugin help for this target."), None)
+                })?;
+                result["operation"] = info(op, true);
+            }
+            None => detail["operations"] = json!(panel.operations().map(|op| info(op, false)).collect::<Vec<_>>()),
+        }
+        result["plugin"] = detail;
+        Ok(result)
     }
 }

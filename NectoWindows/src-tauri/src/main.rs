@@ -5,6 +5,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod adb;
+mod control;
+mod endpoint;
 mod panels;
 mod registry;
 mod schema;
@@ -97,6 +99,7 @@ fn main() {
         .setup(|app| {
             let registry = Registry::new(app.handle().clone());
             app.manage(registry.clone());
+            tauri::async_runtime::spawn(control::listen(registry.clone()));
             tauri::async_runtime::spawn(watch_adb(registry));
             Ok(())
         })

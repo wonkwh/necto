@@ -22,8 +22,11 @@ In:
 
 Out, for later cycles: iOS over usbmuxd, the loopback simulator path, plugin
 installation and updates, desktop plugins and `necto.desktop.*` bridges, shell
-policy, `necto-cli` and the control socket, settings, localization, `plugin.event`
-channels.
+policy, settings, localization, `plugin.event` channels.
+
+Added after the first cycle: the control server and `necto-cli` for `targets`,
+`plugins`, `invoke`, `subscribe` and `cancel`, over a named pipe only its owner can
+open. Discovery and calls go through the same registry as panels.
 
 ## Layout
 

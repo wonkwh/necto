@@ -4,9 +4,15 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+default-run = "necto"
+
 [[bin]]
 name = "necto"
 path = "src/main.rs"
+
+[[bin]]
+name = "necto-cli"
+path = "src/bin/necto-cli.rs"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -19,3 +25,6 @@ tokio = { version = "1", features = ["full"] }
 sha2 = "0.10"
 base64 = "0.22"
 uuid = { version = "1", features = ["v4"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_Security_Authorization"] }

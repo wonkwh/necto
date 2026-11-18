@@ -18,6 +18,23 @@ cargo run
 Start an app that links the Necto Android SDK on a cabled phone or an emulator. It
 appears in the sidebar within a few seconds.
 
+## Command line
+
+`necto-cli` talks to the running app, with the commands and output of the Mac
+`necto-cli` ([docs/control-socket.md](../docs/control-socket.md)). Device IDs are adb
+serials.
+
+```sh
+cargo run --bin necto-cli -- device list
+cargo run --bin necto-cli -- plugin list --device emulator-5554 --app com.example.app
+cargo run --bin necto-cli -- plugin subscribe network-logger records.observe \
+  --device emulator-5554 --app com.example.app --limit 10
+```
+
+On Windows it connects through the named pipe `\\.\pipe\necto-control-<user>`, which
+only its owner can open; on macOS and Linux, during development, through
+`~/.necto-windows/necto.sock`. Installing, deleting and `shell run` are not available.
+
 ## Package
 
 ```sh
@@ -26,9 +43,10 @@ cd NectoWindows/src-tauri
 cargo tauri build
 ```
 
-On Windows this produces NSIS and MSI installers under `target/release/bundle/`.
+On Windows this produces NSIS and MSI installers under `target/release/bundle/`, and
+`target/release/necto-cli.exe` beside them; the installers do not carry the CLI.
 
 ## Not yet
 
-iOS over usbmuxd, plugin installation, desktop plugins, shell access, `necto-cli`,
-settings and localization of the shell. `plugin.event` channels are ignored.
+Plugin installation, desktop plugins, shell access, settings and localization of the
+shell. `plugin.event` channels are ignored. iOS apps are read with the Mac app.
