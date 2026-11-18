@@ -51,6 +51,7 @@ NectoPluginRegistry
 | `NectoNetworkPlugin` | 네트워크 기록과 패널 | 자동 트래픽 캡처 |
 | `NectoEventsPlugin` | 앱 이벤트와 패널 | 자동 이벤트 캡처 |
 | `NectoFilesPlugin` | 파일 탐색과 패널 | 다른 플러그인 |
+| `NectoSQLitePlugin` | 읽기 전용 SQLite 조회와 패널 | 쓰기, 샌드박스 홈 밖의 파일 |
 | `NectoPreferencesPlugin` | 환경설정 접근과 패널 | 다른 플러그인 |
 | `NectoPerformancePlugin` | 성능 기록과 패널 | 자동 프로세스 샘플링 |
 | `NectoUIControlPlugin` | UI 조회·조작과 iOS 터치 런타임 | 다른 플러그인 |

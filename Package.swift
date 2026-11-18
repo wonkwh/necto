@@ -14,6 +14,7 @@ let package = Package(
         .library(name: "NectoEventsPlugin", targets: ["NectoEventsPlugin"]),
         .library(name: "NectoFilesPlugin", targets: ["NectoFilesPlugin"]),
         .library(name: "NectoPreferencesPlugin", targets: ["NectoPreferencesPlugin"]),
+        .library(name: "NectoSQLitePlugin", targets: ["NectoSQLitePlugin"]),
         .library(name: "NectoPerformancePlugin", targets: ["NectoPerformancePlugin"]),
         .library(name: "NectoUIControlPlugin", targets: ["NectoUIControlPlugin"]),
         .library(name: "NectoProcessMetricPlugin", targets: ["NectoProcessMetricPlugin"]),
@@ -63,6 +64,13 @@ let package = Package(
             resources: [.copy("Panel")]
         ),
         .target(
+            name: "NectoSQLitePlugin",
+            dependencies: ["NectoModel", "NectoSDK"],
+            path: "SDK/Plugins/SQLite",
+            sources: ["iOS"],
+            resources: [.copy("Panel")]
+        ),
+        .target(
             name: "NectoPerformancePlugin",
             dependencies: ["NectoModel", "NectoSDK"],
             path: "SDK/Plugins/Performance",
@@ -105,9 +113,14 @@ let package = Package(
             dependencies: [
                 "NectoSDK", "NectoProcessMetricPlugin", "NectoTransport", "NectoModel",
                 "NectoNetworkPlugin", "NectoEventsPlugin", "NectoFilesPlugin", "NectoPreferencesPlugin",
-                "NectoPerformancePlugin", "NectoUIControlPlugin",
+                "NectoPerformancePlugin", "NectoUIControlPlugin", "NectoSQLitePlugin",
             ],
             path: "SDK/iOS/Tests/NectoSDKTests"
+        ),
+        .testTarget(
+            name: "NectoSQLitePluginTests",
+            dependencies: ["NectoSQLitePlugin"],
+            path: "SDK/iOS/Tests/NectoSQLitePluginTests"
         ),
         .testTarget(
             name: "NectoURLSessionCaptureTests",

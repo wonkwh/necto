@@ -50,6 +50,7 @@ events.report(NectoEvent(level: .info, tag: "App", message: "App started"))
 | `NectoNetworkPlugin` | Report requests from your own networking hooks | No |
 | `NectoEventsPlugin` | Application events | No |
 | `NectoFilesPlugin` | Files | No |
+| `NectoSQLitePlugin` | SQLite 데이터베이스 (읽기 전용) | No |
 | `NectoPreferencesPlugin` | Preferences | No |
 | `NectoPerformancePlugin` | Report performance readings | No |
 | `NectoProcessMetricPlugin` | Automatic process metrics | No |

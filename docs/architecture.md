@@ -51,6 +51,7 @@ handlers and manifest bindings, not a feature-specific host adapter or wire mess
 | `NectoNetworkPlugin` | Network records and panel | Automatic traffic capture |
 | `NectoEventsPlugin` | Application events and panel | Automatic event capture |
 | `NectoFilesPlugin` | File browsing and panel | Other plugins |
+| `NectoSQLitePlugin` | Read-only SQLite queries and panel | Writes, or files outside the sandbox home |
 | `NectoPreferencesPlugin` | Preferences access and panel | Other plugins |
 | `NectoPerformancePlugin` | Performance readings and panel | Automatic process sampling |
 | `NectoUIControlPlugin` | UI inspection, interaction and iOS touch runtime | Other plugins |
