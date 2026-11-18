@@ -39,7 +39,7 @@ function closure(name) {
 }
 
 const plugins = ["NectoNetworkPlugin", "NectoEventsPlugin", "NectoFilesPlugin",
-  "NectoPreferencesPlugin", "NectoPerformancePlugin", "NectoUIControlPlugin", "NectoSQLitePlugin"];
+  "NectoPreferencesPlugin", "NectoPerformancePlugin", "NectoUIControlPlugin", "NectoSQLitePlugin", "NectoRealtimePlugin"];
 
 test("every plugin is independently selectable without sibling plugins", () => {
   for (const name of plugins) {
@@ -48,6 +48,8 @@ test("every plugin is independently selectable without sibling plugins", () => {
     for (const other of plugins.filter(other => other !== name)) assert.ok(!included.has(other));
     assert.ok(!included.has("NectoURLSessionCapturePlugin"));
     assert.ok(!included.has("NectoProcessMetricPlugin"));
+    assert.ok(!included.has("NectoWebSocketCapturePlugin"));
+    assert.ok(!included.has("NectoBluetoothCapturePlugin"));
   }
 });
 
@@ -61,4 +63,6 @@ test("the core SDK and public reporting products exclude private runtime modules
   }
   assert.deepEqual(dependencies("NectoURLSessionCapturePlugin").sort(), ["NectoModel", "NectoNetworkPlugin", "NectoSDK"]);
   assert.deepEqual(dependencies("NectoProcessMetricPlugin").sort(), ["NectoModel", "NectoPerformancePlugin", "NectoSDK"]);
+  assert.deepEqual(dependencies("NectoWebSocketCapturePlugin"), ["NectoRealtimePlugin"]);
+  assert.deepEqual(dependencies("NectoBluetoothCapturePlugin"), ["NectoRealtimePlugin"]);
 });

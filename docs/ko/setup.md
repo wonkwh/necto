@@ -50,11 +50,14 @@ events.report(NectoEvent(level: .info, tag: "App", message: "App started"))
 | `NectoNetworkPlugin` | Report requests from your own networking hooks | No |
 | `NectoEventsPlugin` | Application events | No |
 | `NectoFilesPlugin` | Files | No |
-| `NectoSQLitePlugin` | SQLite 데이터베이스 (읽기 전용) | No |
+| `NectoSQLitePlugin` | SQLite databases, read-only | No |
 | `NectoPreferencesPlugin` | Preferences | No |
 | `NectoPerformancePlugin` | Report performance readings | No |
 | `NectoProcessMetricPlugin` | Automatic process metrics | No |
 | `NectoUIControlPlugin` | UI inspection and interaction | Yes |
+| `NectoRealtimePlugin` | Report socket, Bluetooth and stream messages | No |
+| `NectoWebSocketCapturePlugin` | Automatic URLSessionWebSocketTask recording | Yes |
+| `NectoBluetoothCapturePlugin` | Automatic CoreBluetooth central recording | No |
 | `NectoURLSessionCapturePlugin` | Automatic URLSession recording | Yes |
 
 기존 `NectoSDK` 하나만 사용하던 앱은 사용하는 product를 명시적으로 추가해야 해요.

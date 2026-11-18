@@ -13,6 +13,7 @@ import Testing
 @testable import NectoFilesPlugin
 @testable import NectoPreferencesPlugin
 @testable import NectoPerformancePlugin
+@testable import NectoRealtimePlugin
 @testable import NectoSQLitePlugin
 @testable import NectoUIControlPlugin
 @testable import NectoSDK
@@ -196,6 +197,17 @@ struct ManifestContractTests {
         )
     }
 
+    @Test("what the realtime plugin returns is what its manifest promised")
+    func realtimeMatchesItsManifest() async throws {
+        let plugin = NectoRealtimePlugin()
+        plugin.report(channel: "Chat", direction: .outbound, text: #"{"hello":1}"#)
+        plugin.reportBinary(channel: "Files", direction: .inbound, byteCount: 64)
+
+        try await check(plugin, "necto.device.realtime.list", in: "realtime", input: ["limit": 10])
+        try await check(plugin, "necto.device.realtime.detail", in: "realtime", input: ["id": "1"])
+        try await check(plugin, "necto.device.realtime.clear", in: "realtime")
+    }
+
     @Test("Swipe limits and input mode are validated")
     func controlInputValidation() throws {
         let operations = try operations(of: "control")
@@ -267,7 +279,7 @@ struct ManifestContractTests {
     /// contract while promising nothing.
     @Test("every shipped operation says what it takes and returns", arguments: [
         "event-log", "files", "network-logger", "performance-monitor", "plugin-sample", "preferences", "shell-demo",
-        "control", "sqlite",
+        "control", "sqlite", "realtime",
     ])
     func schemasSaySomething(plugin: String) throws {
         for (key, operation) in try operations(of: plugin) {

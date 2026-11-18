@@ -4,10 +4,12 @@
 
 import NectoFilesPlugin
 import NectoPreferencesPlugin
+import NectoRealtimePlugin
 import NectoSDK
 import NectoSQLitePlugin
 import NectoUIControlPlugin
 import NectoURLSessionCapturePlugin
+import NectoWebSocketCapturePlugin
 import SQLite3
 import SwiftUI
 
@@ -42,6 +44,12 @@ struct ExampleApp: App {
         Self.seedPreferences()
         Self.seedFiles()
         Self.seedDatabase()
+
+        // Long-lived channels: WebSocket tasks are captured, anything else the app reports.
+        let realtime = NectoRealtimePlugin()
+        NectoSDK.register(realtime)
+        NectoWebSocketCapture.install(reporting: realtime)
+        realtime.report(channel: "Example", direction: .state, text: "launched")
 
         NectoSDK.start()
         ExampleTelemetry.start()

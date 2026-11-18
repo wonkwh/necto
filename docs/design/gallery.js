@@ -1057,6 +1057,56 @@ document.getElementById("sqlite").innerHTML = `
     </section>
   </div>`;
 
+const realtimeRows = [
+  { time: "16:38:02.418", channel: "WS api.example.com/chat", dir: "in", tone: "ok", arrow: "↓", text: '{"type":"message","from":"mina","body":"on my way"}', on: true },
+  { time: "16:38:02.120", channel: "WS api.example.com/chat", dir: "out", tone: "info", arrow: "↑", text: '{"type":"typing"}' },
+  { time: "16:38:01.902", channel: "BLE", dir: "in", tone: "ok", arrow: "↓", text: "value 2A37 0x0648" },
+  { time: "16:38:01.330", channel: "Files", dir: "in", tone: "ok", arrow: "↓", text: "binary ×12, 1.2 MiB" },
+  { time: "16:38:00.004", channel: "WS api.example.com/chat", dir: "state", tone: "idle", arrow: "•", text: "connect" },
+];
+
+document.getElementById("realtime").innerHTML = `
+  <div class="necto-toolbar">
+    <input class="necto-field" style="max-width:360px" type="search" placeholder="Search channel or message" aria-label="Search" />
+    <select class="necto-field" style="flex:0 1 260px; max-width:260px" aria-label="Filter by channel"><option>All channels</option></select>
+    <span class="necto-badge">5</span>
+    <span style="margin-left:auto"></span>
+    <button type="button" class="necto-button necto-button-quiet necto-button-danger">Clear</button>
+  </div>
+  <div style="display:flex; height:300px">
+    <div style="flex:1; overflow:auto; min-width:0">
+      <table class="necto-table" style="table-layout:fixed">
+        <thead><tr>
+          <th class="necto-numeric" style="width:116px">Time</th><th style="width:200px">Channel</th><th style="width:44px"></th><th>Message</th>
+        </tr></thead>
+        <tbody>${realtimeRows.map((r) => `
+          <tr aria-selected="${Boolean(r.on)}">
+            <td class="necto-numeric">${r.time}</td>
+            <td><span class="necto-badge" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${r.channel}</span></td>
+            <td><span class="necto-status necto-status-${r.tone}">${r.arrow}</span></td>
+            <td><span style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--necto-text-secondary)">${r.text.replaceAll("<", "&lt;")}</span></td>
+          </tr>`).join("")}</tbody>
+      </table>
+    </div>
+    <aside class="necto-detail" style="width:300px; border-top:0; border-left:1px solid var(--necto-border)">
+      <div class="necto-detail-title">
+        <span class="necto-status necto-status-ok">↓</span>
+        <span class="necto-badge">WS api.example.com/chat</span>
+        <span class="necto-detail-title-url">16:38:02.418</span>
+        <button type="button" class="necto-button necto-button-quiet" aria-label="Close">✕</button>
+      </div>
+      <div class="necto-detail-body">
+        <p class="necto-caption">52 B</p>
+        <p class="necto-section-title">Body</p>
+        <pre class="necto-code">{
+  "body": "on my way",
+  "from": "mina",
+  "type": "message"
+}</pre>
+      </div>
+    </aside>
+  </div>`;
+
 document.getElementById("control").innerHTML = `
   <div class="necto-tabs">
     <button type="button" class="necto-tab" aria-selected="true">Actions</button>

@@ -15,6 +15,9 @@ let package = Package(
         .library(name: "NectoFilesPlugin", targets: ["NectoFilesPlugin"]),
         .library(name: "NectoPreferencesPlugin", targets: ["NectoPreferencesPlugin"]),
         .library(name: "NectoSQLitePlugin", targets: ["NectoSQLitePlugin"]),
+        .library(name: "NectoRealtimePlugin", targets: ["NectoRealtimePlugin"]),
+        .library(name: "NectoWebSocketCapturePlugin", targets: ["NectoWebSocketCapturePlugin"]),
+        .library(name: "NectoBluetoothCapturePlugin", targets: ["NectoBluetoothCapturePlugin"]),
         .library(name: "NectoPerformancePlugin", targets: ["NectoPerformancePlugin"]),
         .library(name: "NectoUIControlPlugin", targets: ["NectoUIControlPlugin"]),
         .library(name: "NectoProcessMetricPlugin", targets: ["NectoProcessMetricPlugin"]),
@@ -71,6 +74,24 @@ let package = Package(
             resources: [.copy("Panel")]
         ),
         .target(
+            name: "NectoRealtimePlugin",
+            dependencies: ["NectoModel", "NectoSDK"],
+            path: "SDK/Plugins/Realtime",
+            sources: ["iOS"],
+            resources: [.copy("Panel")]
+        ),
+        // Capture mechanisms for the realtime plugin, each opt-in and linked only when chosen.
+        .target(
+            name: "NectoWebSocketCapturePlugin",
+            dependencies: ["NectoRealtimePlugin"],
+            path: "SDK/Plugins/WebSocketCapture/iOS"
+        ),
+        .target(
+            name: "NectoBluetoothCapturePlugin",
+            dependencies: ["NectoRealtimePlugin"],
+            path: "SDK/Plugins/BluetoothCapture/iOS"
+        ),
+        .target(
             name: "NectoPerformancePlugin",
             dependencies: ["NectoModel", "NectoSDK"],
             path: "SDK/Plugins/Performance",
@@ -114,6 +135,7 @@ let package = Package(
                 "NectoSDK", "NectoProcessMetricPlugin", "NectoTransport", "NectoModel",
                 "NectoNetworkPlugin", "NectoEventsPlugin", "NectoFilesPlugin", "NectoPreferencesPlugin",
                 "NectoPerformancePlugin", "NectoUIControlPlugin", "NectoSQLitePlugin",
+                "NectoRealtimePlugin",
             ],
             path: "SDK/iOS/Tests/NectoSDKTests"
         ),
@@ -121,6 +143,11 @@ let package = Package(
             name: "NectoSQLitePluginTests",
             dependencies: ["NectoSQLitePlugin"],
             path: "SDK/iOS/Tests/NectoSQLitePluginTests"
+        ),
+        .testTarget(
+            name: "NectoRealtimePluginTests",
+            dependencies: ["NectoRealtimePlugin", "NectoWebSocketCapturePlugin", "NectoBluetoothCapturePlugin"],
+            path: "SDK/iOS/Tests/NectoRealtimePluginTests"
         ),
         .testTarget(
             name: "NectoURLSessionCaptureTests",

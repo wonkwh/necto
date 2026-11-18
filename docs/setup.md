@@ -57,6 +57,9 @@ for a complete implementation.
 | `NectoPerformancePlugin` | Report performance readings | No |
 | `NectoProcessMetricPlugin` | Automatic process metrics | No |
 | `NectoUIControlPlugin` | UI inspection and interaction | Yes |
+| `NectoRealtimePlugin` | Report socket, Bluetooth and stream messages | No |
+| `NectoWebSocketCapturePlugin` | Automatic URLSessionWebSocketTask recording | Yes |
+| `NectoBluetoothCapturePlugin` | Automatic CoreBluetooth central recording | No |
 | `NectoURLSessionCapturePlugin` | Automatic URLSession recording | Yes |
 
 Apps previously using only `NectoSDK` must explicitly add the products they use.

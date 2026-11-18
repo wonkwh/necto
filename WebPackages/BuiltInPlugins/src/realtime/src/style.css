@@ -1,0 +1,69 @@
+/*
+ * Copyright (c) 2026 Viva Republica, Inc.
+ *
+ * Column widths and layout only. Everything else comes from @necto/bridge/components.css.
+ */
+
+@import "@necto/bridge/theme.css";
+@import "@necto/bridge/components.css";
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+#root > .necto-app {
+  height: 100%;
+}
+
+.realtime-search {
+  max-width: 360px;
+}
+
+.realtime-channel {
+  flex: 0 1 260px;
+  max-width: 260px;
+}
+
+.realtime-table {
+  table-layout: fixed;
+}
+
+.realtime-col-time {
+  width: 116px;
+}
+
+.realtime-col-channel {
+  width: 200px;
+}
+
+.realtime-col-direction {
+  width: 44px;
+}
+
+.realtime-row {
+  cursor: pointer;
+}
+
+.realtime-cell {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.realtime-message {
+  color: var(--necto-text-secondary);
+}
+
+.realtime-detail {
+  display: grid;
+  gap: var(--necto-space-3);
+}
+
+.realtime-code {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
