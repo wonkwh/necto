@@ -42,14 +42,24 @@ only its owner can open; on macOS and Linux, during development, through
 
 ## Package
 
-```sh
-cargo install tauri-cli --version "^2" --locked
-cd NectoWindows/src-tauri
-cargo tauri build
+The installer carries `necto-cli.exe`, so the CLI is built first and staged where
+Tauri's `externalBin` looks for it. `tauri.bundle.conf.json` adds that and the NSIS
+hooks only for packaging, so `cargo run` and `cargo test` need neither.
+
+```powershell
+cd NectoWindows\src-tauri
+cargo build --release --bin necto-cli
+New-Item -ItemType Directory -Force binaries | Out-Null
+Copy-Item target\release\necto-cli.exe binaries\necto-cli-x86_64-pc-windows-msvc.exe
+npx @tauri-apps/cli@2 build --config tauri.bundle.conf.json
 ```
 
-On Windows this produces NSIS and MSI installers under `target/release/bundle/`, and
-`target/release/necto-cli.exe` beside them; the installers do not carry the CLI.
+This writes an NSIS installer under `target\release\bundle\nsis\`. It installs for
+the current user into `%LOCALAPPDATA%\Necto`, with `necto-cli.exe` beside the app,
+and puts that folder on the user's PATH; uninstalling takes it off again
+([windows/hooks.nsh](src-tauri/windows/hooks.nsh)). Open a new terminal after
+installing. CI installs, calls and uninstalls each build with
+[script/check-installer.ps1](script/check-installer.ps1).
 
 ## Not yet
 
