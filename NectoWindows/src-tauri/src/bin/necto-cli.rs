@@ -28,6 +28,7 @@ USAGE:
   necto-cli plugin schema <plugin> <operation> <scope>
   necto-cli plugin send <plugin> <operation> <scope> [--input <json> | --input-file <path|->]
   necto-cli plugin subscribe <plugin> <operation> <scope> [input] [--limit <n>] [--timeout <30s|500ms>]
+  necto-cli skills install [--codex] [--claude] [--force]
 
   <scope> is --device <device-id> --app <bundle-id>, or --desktop.";
 
@@ -49,6 +50,9 @@ struct Args {
     input_file: Option<String>,
     limit: Option<String>,
     timeout: Option<String>,
+    codex: bool,
+    claude: bool,
+    force: bool,
 }
 
 fn parse(raw: impl Iterator<Item = String>) -> Result<Args, Failure> {
@@ -63,6 +67,9 @@ fn parse(raw: impl Iterator<Item = String>) -> Result<Args, Failure> {
         match flag.as_str() {
             "--json" => args.json = true,
             "--desktop" => args.desktop = true,
+            "--codex" => args.codex = true,
+            "--claude" => args.claude = true,
+            "--force" => args.force = true,
             "--device" => args.device = Some(value()?),
             "--app" => args.app = Some(value()?),
             "--input" => args.input = Some(value()?),
@@ -355,6 +362,55 @@ fn duration(text: &str) -> Result<Duration, Failure> {
     seconds.map(Duration::from_secs_f64).ok_or_else(|| Failure::Usage("--timeout must be a positive duration in seconds or milliseconds.".into()))
 }
 
+// MARK: Skills
+
+/// The agent skill, written for this CLI. It works without a running Necto.
+const SKILL: &str = include_str!("../../resources/skills/necto/SKILL.md");
+
+/// Writes SKILL.md for Codex and Claude Code. A changed copy is replaced only with `--force`.
+fn install_skills(args: &Args) -> Result<(), Failure> {
+    if !args.codex && !args.claude {
+        return Err(Failure::Usage("Choose --codex, --claude, or both.".into()));
+    }
+    let home = std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" })
+        .map(std::path::PathBuf::from)
+        .ok_or_else(|| Failure::Failed("Could not find the home folder.".into()))?;
+    let agents = [(args.codex, ".agents"), (args.claude, ".claude")];
+    let destinations: Vec<_> = agents.iter().filter(|(on, _)| *on).map(|(_, root)| home.join(root).join("skills").join("necto").join("SKILL.md")).collect();
+    let fail = |message: String| Failure::Failed(message);
+
+    // Every destination is checked before any is written.
+    for destination in &destinations {
+        let mut current = destination.as_path();
+        while current != home {
+            if std::fs::symlink_metadata(current).is_ok_and(|m| m.file_type().is_symlink()) {
+                return Err(fail(format!("Refusing to install through a symbolic link: {}", current.display())));
+            }
+            current = current.parent().ok_or_else(|| fail("The skill folder is outside the home folder.".into()))?;
+        }
+        if let Ok(metadata) = std::fs::symlink_metadata(destination) {
+            if !metadata.is_file() {
+                return Err(fail(format!("Expected a regular file at {}", destination.display())));
+            }
+            if std::fs::read(destination).ok().as_deref() != Some(SKILL.as_bytes()) && !args.force {
+                return Err(fail(format!("{} differs from the bundled skill. Use --force to replace it.", destination.display())));
+            }
+        }
+    }
+    for destination in destinations {
+        if std::fs::read(&destination).ok().as_deref() == Some(SKILL.as_bytes()) {
+            println!("Already installed: {}", destination.display());
+            continue;
+        }
+        let folder = destination.parent().expect("SKILL.md has a folder");
+        std::fs::create_dir_all(folder).map_err(|e| fail(format!("Could not create {}: {e}", folder.display())))?;
+        let staged = folder.join(".SKILL.md.partial");
+        std::fs::write(&staged, SKILL).and_then(|_| std::fs::rename(&staged, &destination)).map_err(|e| fail(format!("Could not write {}: {e}", destination.display())))?;
+        println!("Installed: {}", destination.display());
+    }
+    Ok(())
+}
+
 // MARK: Commands
 
 async fn run(args: Args) -> Result<(), Failure> {
@@ -438,7 +494,8 @@ async fn run(args: Args) -> Result<(), Failure> {
             let timeout = args.timeout.as_deref().map(duration).transpose()?;
             stream(message, limit, timeout).await?;
         }
-        ["install" | "delete" | "shell" | "skills" | "pack", ..] | ["plugin", "install" | "delete" | "pack", ..] => {
+        ["skills", "install"] => install_skills(&args)?,
+        ["install" | "delete" | "shell" | "pack", ..] | ["plugin", "install" | "delete" | "pack", ..] => {
             return Err(Failure::Failed(format!("'{}' is not available in Necto for Windows yet.", words.join(" "))));
         }
         _ => return Err(Failure::Usage(String::new())),

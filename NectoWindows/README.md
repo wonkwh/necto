@@ -31,6 +31,11 @@ cargo run --bin necto-cli -- plugin subscribe network-logger records.observe \
   --device emulator-5554 --app com.example.app --limit 10
 ```
 
+`necto-cli skills install --codex --claude` writes the agent skill for this CLI
+([resources/skills/necto/SKILL.md](src-tauri/resources/skills/necto/SKILL.md)) to
+`~/.agents/skills/necto` and `~/.claude/skills/necto`, without a running Necto. A
+changed copy is replaced only with `--force`.
+
 On Windows it connects through the named pipe `\\.\pipe\necto-control-<user>`, which
 only its owner can open; on macOS and Linux, during development, through
 `~/.necto-windows/necto.sock`. Installing, deleting and `shell run` are not available.
