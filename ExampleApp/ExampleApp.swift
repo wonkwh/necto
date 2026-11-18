@@ -104,6 +104,10 @@ struct ExampleApp: App {
             defaults.set(1.25, forKey: "example.playbackRate")
             defaults.set(Data((0 ..< 64).map { UInt8($0) }), forKey: "example.pushToken")
         }
+        if defaults.object(forKey: "example.savedNetwork") == nil {
+            // A Codable saved as Data, the way apps commonly store a model in defaults.
+            defaults.set(try? PropertyListEncoder().encode(["ssid": "Office", "band": "5GHz"]), forKey: "example.savedNetwork")
+        }
     }
 }
 

@@ -4,7 +4,7 @@
 
 import { assert, test } from "vitest";
 
-import { arrayItems, dictionaryFields, display, element, numberValue } from "../src/model";
+import { arrayItems, dictionaryFields, display, element, isDecodedData, numberValue } from "../src/model";
 
 test("an untouched row is saved as the value it showed", () => {
   const stored = ["dark", "1", "1.0", "true", "null", "", " 7", '"quoted"', '{"a":1}', 1, true, { a: [1] }, [2]];
@@ -56,4 +56,11 @@ test("an emptied or oversized number field holds no number", () => {
   assert.strictEqual(numberValue("1.5", "Int"), null);
   assert.strictEqual(numberValue("1e30", "Int"), null);
   assert.strictEqual(numberValue("abc", "Double"), null);
+});
+
+test("only Data the app decoded is shown as a document", () => {
+  assert.isTrue(isDecodedData("Data", '{\n  "a" : 1\n}'));
+  assert.isTrue(isDecodedData("Data", '"text"'));
+  assert.isFalse(isDecodedData("Data", "512 bytes"));
+  assert.isFalse(isDecodedData("String", '{"a":1}'));
 });
