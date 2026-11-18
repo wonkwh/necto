@@ -32,6 +32,7 @@ export const t = createTranslator({
     "A pair is missing its key": "키가 비어 있는 항목이 있어요",
     "Duplicate key '{key}'": "중복된 키 '{key}'",
     "{value} — not editable from here": "{value} — 여기서는 편집할 수 없어요",
+    "Decoded from Data — not editable from here": "Data 를 풀어서 보여 줘요 — 여기서는 편집할 수 없어요",
     Suite: "저장소",
     Save: "저장",
     "This plugin only works inside Necto": "이 플러그인은 Necto 안에서만 동작해요.",

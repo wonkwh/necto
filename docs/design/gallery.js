@@ -937,6 +937,14 @@ const editorRows = [
   ["Data", "example.pushToken",
     `<span class="necto-caption">412 B of binary &mdash; not editable</span>
      <button type="button" class="necto-button">Copy as base64</button>`],
+  ["Data", "example.savedCard",
+    `<div style="display:flex; flex-direction:column; gap:6px; width:380px">
+      <pre class="necto-code">{
+  "addedAt" : "2026-07-29T07:38:02Z",
+  "ssid" : "Office"
+}</pre>
+      <span class="necto-caption">Decoded from Data &mdash; not editable from here</span>
+    </div>`],
 ];
 
 document.getElementById("preferences-editors").innerHTML = `

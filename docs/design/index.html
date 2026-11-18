@@ -163,7 +163,8 @@
           A value is edited in its own shape. A Bool is a switch, a number is a number
           field, and a collection is rows &mdash; one element per field, never a JSON
           blob to retype. An element that is itself structured is one line of JSON in
-          its row. Data is not editable; it is described and copied.
+          its row. Data is not editable; a plist or JSON inside it is shown decoded, anything
+          else is described and copied.
         </p>
         <div class="frame" id="preferences-editors"></div>
       </section>

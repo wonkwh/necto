@@ -137,8 +137,8 @@ public final class NectoPreferencesPlugin: NectoPlugin, @unchecked Sendable {
         }
     }
 
-    /// One line for simple values, JSON for the rest. Data is described rather than
-    /// rendered: a panel showing 40 kB of base64 is showing nothing.
+    /// One line for simple values, JSON for the rest. Data that holds a plist or JSON is
+    /// shown decoded; other Data is described: a panel showing 40 kB of base64 is showing nothing.
     ///
     /// Containers are pretty-printed because this string is also what the editor opens.
     static func describe(_ value: Any) -> String {
@@ -146,7 +146,9 @@ public final class NectoPreferencesPlugin: NectoPlugin, @unchecked Sendable {
         case let string as String:
             return string
         case let data as Data:
-            return "\(data.count) bytes"
+            return PreferencesDataDecoder.decode(data)
+                .flatMap { try? $0.jsonString(options: [.sortedKeys, .prettyPrinted, .fragmentsAllowed]) }
+                ?? "\(data.count) bytes"
         case let date as Date:
             return ISO8601DateFormatter().string(from: date)
         case let number as NSNumber:

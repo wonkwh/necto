@@ -49,6 +49,11 @@ export function numberValue(text: string, type: string): number | null {
   return number;
 }
 
+/// A stored Data the app decoded into JSON, as opposed to its "N bytes" description.
+export function isDecodedData(type: string, text: string): boolean {
+  return type === "Data" && parse(text) !== undefined;
+}
+
 function parse(text: string): NectoJSONValue | undefined {
   try {
     return JSON.parse(text) as NectoJSONValue;
