@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 1,
+  "id": "realtime",
+  "name": "Realtime",
+  "description": "Socket, Bluetooth and stream messages, newest first",
+  "version": "0.1.0",
+  "author": "Necto",
+  "icon": {
+    "systemName": "dot.radiowaves.left.and.right"
+  },
+  "assets": [
+    "index.html",
+    "assets"
+  ],
+  "allowedOrigins": [
+    "self"
+  ],
+  "operations": [
+    {
+      "id": "realtime.list",
+      "title": "List messages",
+      "description": "Recent messages and state changes, newest first, up to limit per channel",
+      "kind": "once",
+      "binding": {
+        "name": "necto.device.realtime.list",
+        "version": 1
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "seq": {
+                  "type": "number"
+                },
+                "at": {
+                  "type": "number"
+                },
+                "channel": {
+                  "type": "string"
+                },
+                "direction": {
+                  "type": "string",
+                  "enum": [
+                    "out",
+                    "in",
+                    "state"
+                  ]
+                },
+                "preview": {
+                  "type": "string"
+                },
+                "byteCount": {
+                  "type": "number"
+                },
+                "isBinary": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "seq",
+                "at",
+                "channel",
+                "direction",
+                "preview",
+                "byteCount",
+                "isBinary"
+              ],
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "records"
+        ],
+        "additionalProperties": true
+      },
+      "timeoutMs": 5000
+    },
+    {
+      "id": "realtime.detail",
+      "title": "Message detail",
+      "description": "One message with its full body",
+      "kind": "once",
+      "binding": {
+        "name": "necto.device.realtime.detail",
+        "version": 1
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "record": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "seq": {
+                "type": "number"
+              },
+              "at": {
+                "type": "number"
+              },
+              "channel": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "out",
+                  "in",
+                  "state"
+                ]
+              },
+              "preview": {
+                "type": "string"
+              },
+              "byteCount": {
+                "type": "number"
+              },
+              "isBinary": {
+                "type": "boolean"
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "seq",
+              "at",
+              "channel",
+              "direction",
+              "preview",
+              "byteCount",
+              "isBinary",
+              "text"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "record"
+        ],
+        "additionalProperties": true
+      },
+      "timeoutMs": 5000
+    },
+    {
+      "id": "realtime.observe",
+      "title": "Watch messages",
+      "description": "Messages as they happen",
+      "kind": "stream",
+      "binding": {
+        "name": "necto.device.realtime.observe",
+        "version": 1
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "record": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "seq": {
+                "type": "number"
+              },
+              "at": {
+                "type": "number"
+              },
+              "channel": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "out",
+                  "in",
+                  "state"
+                ]
+              },
+              "preview": {
+                "type": "string"
+              },
+              "byteCount": {
+                "type": "number"
+              },
+              "isBinary": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "seq",
+              "at",
+              "channel",
+              "direction",
+              "preview",
+              "byteCount",
+              "isBinary"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "record"
+        ],
+        "additionalProperties": true
+      },
+      "timeoutMs": 5000
+    },
+    {
+      "id": "realtime.clear",
+      "title": "Clear messages",
+      "description": "Empties the buffer kept in the app",
+      "kind": "once",
+      "binding": {
+        "name": "necto.device.realtime.clear",
+        "version": 1
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "cleared": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cleared"
+        ],
+        "additionalProperties": true
+      },
+      "timeoutMs": 5000
+    }
+  ]
+}

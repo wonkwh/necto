@@ -57,6 +57,8 @@ NectoPluginRegistry
 | `NectoUIControlPlugin` | UI 조회·조작과 iOS 터치 런타임 | 다른 플러그인 |
 | `NectoProcessMetricPlugin` | 선택적인 CPU, 메모리, FPS, 스레드 샘플링 | 앱에 등록되거나 리더가 구독하기 전의 샘플링 |
 | `NectoURLSessionCapturePlugin` | `URLSession`을 쓰는 앱을 위한 하나의 캡처 메커니즘 | 앱에서 끌 수 없는 캡처 기능 |
+| `NectoRealtimePlugin` | 소켓·블루투스·스트림 메시지와 패널 | 자동 캡처 |
+| `NectoWebSocketCapturePlugin`, `NectoBluetoothCapturePlugin` | `URLSessionWebSocketTask`·CoreBluetooth를 쓰는 앱을 위한 캡처 메커니즘 | 앱이 설치하지 않은 캡처 |
 | `necto-core`, `necto-android` | Android 브리지: 프로토콜, 런타임, ADB 리스너, 앱 식별 | 기능 구현이나 패널 |
 | `SDK/Plugins/<Name>` | 두 플랫폼의 플러그인 하나: 빌드된 패널, Swift 타깃, Gradle 모듈 | 다른 플러그인 |
 | `Necto/` | 셸 UI와 플러그인 호스트 | 기능 화면 |
