@@ -16,6 +16,7 @@ import {
   type RecordDetail,
   type RecordSummary,
 } from "./necto";
+import { makeFilter } from "./filter";
 import { t } from "./localization";
 
 // Development only: lets the plugin be opened and checked in a browser without
@@ -224,15 +225,16 @@ function exchange(record: RecordDetail, side: "request" | "response"): Node[] {
 const records = new Map<string, RecordSummary>();
 let query = "";
 let selectedID: string | null = null;
+let autoSelect = false;
 let detail: RecordDetail | null = null;
 let tab: DetailTab = "summary";
 let message: string | null = null;
 const detailPane = createDetailPane("necto.network-logger.detail");
 
 function visibleRecords(): RecordSummary[] {
-  const term = query.trim().toLowerCase();
+  const matches = makeFilter(query);
   return [...records.values()]
-    .filter((record) => !term || `${record.method} ${record.url}`.toLowerCase().includes(term))
+    .filter((record) => matches(`${record.method} ${record.url}`))
     .sort((first, second) => second.startedAtMilliseconds - first.startedAtMilliseconds);
 }
 
@@ -241,7 +243,7 @@ function visibleRecords(): RecordSummary[] {
 const filter = el("input", {
   class: "necto-field",
   type: "search",
-  placeholder: t("Filter by method, host or path"),
+  placeholder: t("Filter by method, host or path — a, !b, /regex/"),
   "aria-label": t("Filter requests"),
 }) as HTMLInputElement;
 
@@ -252,6 +254,12 @@ const clearButton = el(
   [t("Clear")],
 );
 
+const autoSelectButton = el(
+  "button",
+  { type: "button", class: "necto-button", "aria-pressed": "false" },
+  [t("Auto Select")],
+);
+
 /// `tabindex` so the arrow keys below have somewhere to land: a list a developer scans
 /// should not need the pointer.
 const listPane = el("div", { class: "necto-body", tabindex: "0" });
@@ -259,7 +267,7 @@ const detailSlot = el("div", { class: "detail-slot" });
 
 document.getElementById("root")?.append(
   el("div", { class: "necto-app" }, [
-    el("div", { class: "necto-toolbar" }, [filter, count, clearButton]),
+    el("div", { class: "necto-toolbar" }, [filter, count, clearButton, autoSelectButton]),
     listPane,
     detailSlot,
   ]),
@@ -270,6 +278,21 @@ document.getElementById("root")?.append(
 /// The list and the detail pane are rebuilt on their own. Replacing the whole page
 /// would take the filter field's focus and caret with it on every arriving record.
 function renderList(): void {
+  const anchor = selectedRowTop();
+  renderRows();
+  // Newest rows land on top; hold the selected row where the user left it.
+  const top = selectedRowTop();
+  if (anchor !== null && top !== null) listPane.scrollTop += top - anchor;
+}
+
+/// The selected row's on-screen top, or `null` when nothing selected is in the list.
+function selectedRowTop(): number | null {
+  if (!selectedID) return null;
+  const row = listPane.querySelector(`tr[data-id="${CSS.escape(selectedID)}"]`);
+  return row ? row.getBoundingClientRect().top : null;
+}
+
+function renderRows(): void {
   const visible = visibleRecords();
   count.textContent = visible.length ? String(visible.length) : "";
   listPane.replaceChildren();
@@ -297,6 +320,7 @@ function renderList(): void {
 
   const rows = visible.map((record) => {
     const row = el("tr", {
+      "data-id": record.id,
       "aria-selected": record.id === selectedID ? "true" : undefined,
       "data-failed": isFailure(record) ? "true" : undefined,
     }, [
@@ -310,7 +334,7 @@ function renderList(): void {
       el("td", { class: "cell-duration cell-numeric necto-numeric" }, [formatDuration(record)]),
       el("td", { class: "cell-size cell-numeric necto-numeric" }, [formatBytes(record.responseByteCount)]),
     ]);
-    row.addEventListener("click", () => void select(record.id));
+    row.addEventListener("click", () => pick(record.id));
     return row;
   });
 
@@ -334,7 +358,10 @@ function renderDetail(): void {
     class: "necto-button necto-button-quiet",
     "aria-label": t("Close details"),
   }, ["✕"]);
-  close.addEventListener("click", closeDetail);
+  close.addEventListener("click", () => {
+    setAutoSelect(false);
+    closeDetail();
+  });
 
   aside.append(
     el("div", { class: "necto-detail-title necto-detail-title-wrap" }, [
@@ -376,12 +403,21 @@ function detailBody(): Node[] {
 
 // -- actions -----------------------------------------------------------------
 
+/// A row chosen by the user, which takes over from auto select.
+function pick(id: string): void {
+  setAutoSelect(false);
+  void select(id);
+}
+
 async function select(id: string): Promise<void> {
   selectedID = id;
   detail = null;
   renderList();
   renderDetail();
+  await refreshDetail(id);
+}
 
+async function refreshDetail(id: string): Promise<void> {
   try {
     // Bodies live behind their own operation, so scrolling a long list does not drag
     // every response body along with it.
@@ -394,6 +430,22 @@ async function select(id: string): Promise<void> {
     message = String(error);
   }
   renderDetail();
+}
+
+function setAutoSelect(on: boolean): void {
+  autoSelect = on;
+  autoSelectButton.setAttribute("aria-pressed", String(on));
+  if (on) followNewest();
+}
+
+/// Selects the newest visible record and scrolls to it.
+/// - Returns: Whether the selection moved.
+function followNewest(): boolean {
+  const newest = visibleRecords()[0];
+  const moved = newest !== undefined && newest.id !== selectedID;
+  if (moved) void select(newest.id);
+  listPane.scrollTop = 0;
+  return moved;
 }
 
 function closeDetail(): void {
@@ -409,8 +461,11 @@ function closeDetail(): void {
 
 filter.addEventListener("input", () => {
   query = filter.value;
+  if (autoSelect && followNewest()) return;
   renderList();
 });
+
+autoSelectButton.addEventListener("click", () => setAutoSelect(!autoSelect));
 
 clearButton.addEventListener("click", () => {
   void clearRecords()
@@ -427,6 +482,7 @@ clearButton.addEventListener("click", () => {
 /// Arrow keys walk the log and Escape closes the pane.
 listPane.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
+    setAutoSelect(false);
     closeDetail();
     return;
   }
@@ -437,7 +493,7 @@ listPane.addEventListener("keydown", (event) => {
   const index = visible.findIndex((record) => record.id === selectedID);
   const next = event.key === "ArrowDown" ? index + 1 : index - 1;
   const target = visible[Math.max(0, Math.min(visible.length - 1, next))];
-  if (target) void select(target.id);
+  if (target) pick(target.id);
 });
 
 // -- start -------------------------------------------------------------------
@@ -448,8 +504,12 @@ void observeRecords({
   // A record arrives twice, pending then finished. Keying by id means the finished one
   // replaces the pending row rather than adding to it.
   onRecord: (record) => {
+    const previous = records.get(record.id);
     records.set(record.id, record);
+    if (autoSelect && followNewest()) return;
     renderList();
+    // The selected row finishing brings its response with it.
+    if (record.id === selectedID && previous?.state !== record.state) void refreshDetail(record.id);
   },
   onError: (reason) => {
     message = reason;

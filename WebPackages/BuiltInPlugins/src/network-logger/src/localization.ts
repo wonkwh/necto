@@ -28,7 +28,7 @@ export const t = createTranslator({
     Error: "오류",
     Headers: "헤더",
     Body: "본문",
-    "Filter by method, host or path": "메서드, 호스트 또는 경로 필터",
+    "Filter by method, host or path — a, !b, /regex/": "메서드, 호스트 또는 경로 필터 — a, !b, /regex/",
     "Filter requests": "요청 필터",
     Clear: "비우기",
     "No requests yet": "아직 요청이 없어요",
