@@ -17,6 +17,7 @@ import {
   type RecordSummary,
 } from "./necto";
 import { makeFilter } from "./filter";
+import { jsonTokens, parseFormBody, parseJSONBody } from "./body";
 import { t } from "./localization";
 
 // Development only: lets the plugin be opened and checked in a browser without
@@ -86,17 +87,6 @@ function formatStarted(record: RecordSummary): string {
   )}`;
 }
 
-/// Pretty printing JSON is the difference between a body you can read and a wall of
-/// text. Anything that does not parse is shown exactly as it arrived.
-function formatBody(text: string, contentType: string | undefined): string {
-  if (!contentType?.includes("json")) return text;
-  try {
-    return JSON.stringify(JSON.parse(text), null, 2);
-  } catch {
-    return text;
-  }
-}
-
 /// `navigator.clipboard` is the right API and is not always reachable: it needs a
 /// secure context, user activation, and a permission the WebView may not have. The
 /// selection route works wherever the document does.
@@ -119,13 +109,52 @@ async function copyText(text: string): Promise<boolean> {
 
 // -- pieces ------------------------------------------------------------------
 
-/// A body is read far more often than it is copied, so the button stays out of the
+/// Pretty printed and coloured, with a toggle back to the text exactly as it arrived.
+function highlightedJSON(text: string): Node[] {
+  return jsonTokens(text).map(({ text, kind }) =>
+    kind === "plain" ? document.createTextNode(text) : el("span", { class: `json-${kind}` }, [text]),
+  );
+}
+
+/// A body is read far more often than it is copied, so the buttons stay out of the
 /// way until the pointer or the keyboard reaches the block.
-function codeBlock(text: string): HTMLElement {
+/// - Parameters:
+///   - json: The parsed body, when `text` is JSON.
+///   - form: The pairs of a `key=value&…` body, offered as a table.
+function codeBlock(text: string, json?: unknown, form?: [string, string][]): HTMLElement {
+  const formatted = json === undefined ? null : JSON.stringify(json, null, 2);
+  let showsFormatted = formatted !== null;
+  const shown = () => (showsFormatted && formatted !== null ? formatted : text);
+  const pre = el("pre", { class: "necto-code" });
+  const render = () => pre.replaceChildren(...(showsFormatted && formatted !== null ? highlightedJSON(formatted) : [text]));
+  render();
+
   const button = el("button", { type: "button", class: "necto-code-copy" }, [t("copy")]);
+  const actions = el("div", { class: "code-actions" });
+
+  if (formatted !== null) {
+    const toggle = el("button", { type: "button", class: "necto-code-copy" }, [t("raw")]);
+    toggle.addEventListener("click", () => {
+      showsFormatted = !showsFormatted;
+      toggle.textContent = showsFormatted ? t("raw") : t("format");
+      render();
+    });
+    actions.append(toggle);
+  }
+  if (form) {
+    const table = pairs(form);
+    const toggle = el("button", { type: "button", class: "necto-code-copy" }, [t("Form")]);
+    toggle.addEventListener("click", () => {
+      const showsText = pre.isConnected;
+      (showsText ? pre : table).replaceWith(showsText ? table : pre);
+      toggle.textContent = showsText ? t("raw") : t("Form");
+    });
+    actions.append(toggle);
+  }
+  actions.append(button);
 
   button.addEventListener("click", () => {
-    void copyText(text).then((copied) => {
+    void copyText(shown()).then((copied) => {
       // A button that silently does nothing is worse than one that says it failed.
       button.textContent = copied ? t("copied") : t("failed");
       if (copied) button.dataset.copied = "true";
@@ -137,10 +166,7 @@ function codeBlock(text: string): HTMLElement {
     });
   });
 
-  return el("div", { class: "necto-code-block" }, [
-    el("pre", { class: "necto-code" }, [text]),
-    button,
-  ]);
+  return el("div", { class: "necto-code-block" }, [pre, actions]);
 }
 
 /// One shape for every state, because three treatments in one column read as three
@@ -185,7 +211,11 @@ function bodyView(body: Body | undefined, label: string): Node[] {
 
   return [
     el("p", { class: "necto-caption" }, [meta + (body.isTruncated ? ` · ${t("truncated")}` : "")]),
-    codeBlock(formatBody(body.text, body.contentType)),
+    codeBlock(
+      body.text,
+      parseJSONBody(body.text, body.contentType),
+      parseFormBody(body.text, body.contentType),
+    ),
   ];
 }
 

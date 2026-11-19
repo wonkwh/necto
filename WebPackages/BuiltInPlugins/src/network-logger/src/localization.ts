@@ -11,6 +11,8 @@ export const t = createTranslator({
     Response: "응답",
     copy: "복사",
     copied: "복사됨",
+    raw: "원본",
+    format: "포맷",
     failed: "실패",
     fail: "실패",
     "Nothing recorded.": "기록된 내용이 없어요.",

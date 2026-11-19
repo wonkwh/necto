@@ -65,3 +65,27 @@ tr[data-failed="true"] .req-name {
   .col-started, .col-duration, .col-size,
   .cell-started, .cell-duration, .cell-size { display: none; }
 }
+
+/* The copy button sits alone in the shared block; here the format toggle joins it. */
+.code-actions {
+  position: absolute;
+  top: var(--necto-space-1);
+  right: var(--necto-space-1);
+  display: flex;
+  gap: var(--necto-space-1);
+}
+
+.code-actions .necto-code-copy { position: static; }
+
+.json-key { color: var(--necto-info); }
+.json-string { color: var(--necto-success); }
+.json-number { color: var(--necto-warning); }
+.json-literal { color: var(--necto-danger); }
+
+/* The form table takes the code box's frame, so switching views does not move it. */
+.necto-code-block > .necto-pairs {
+  padding: var(--necto-space-2) var(--necto-space-3);
+  border: 1px solid var(--necto-border);
+  border-radius: var(--necto-radius-control);
+  background: var(--necto-base-05);
+}
