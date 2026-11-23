@@ -12,7 +12,7 @@ import org.junit.Test
 class PanelTests {
     @Test
     fun selectedPluginsCarryValidPanels() {
-        for (id in listOf("event-log", "network-logger", "files", "control", "performance-monitor", "preferences")) {
+        for (id in listOf("event-log", "network-logger", "files", "control", "performance-monitor", "preferences", "sqlite", "realtime")) {
             val archive = NectoPluginPanel.resources("necto/panels/$id").read()
             val manifest = NectoPluginManifest.fromJson(NectoJsonValue.parse(
                 archive.files.single { it.path == "manifest.json" }.data.toString(Charsets.UTF_8),

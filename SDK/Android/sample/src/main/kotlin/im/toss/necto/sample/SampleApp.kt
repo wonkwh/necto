@@ -14,12 +14,15 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import android.database.sqlite.SQLiteDatabase
 import im.toss.necto.android.NectoAndroid
 import im.toss.necto.android.NectoAndroidControlPlugin
 import im.toss.necto.plugins.NectoFilesPlugin
 import im.toss.necto.android.NectoDataStorePreferencesPlugin
 import im.toss.necto.okhttp.NectoOkHttpInterceptor
 import im.toss.necto.plugins.NectoNetworkPlugin
+import im.toss.necto.plugins.NectoRealtimePlugin
+import im.toss.necto.plugins.NectoSQLitePlugin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -56,6 +59,13 @@ class SampleApp : Application() {
             // a fresh install.
             seedPreferences()
             seedFiles()
+            seedDatabase()
+            // A real app reports from its socket or Bluetooth code, or opens OkHttp sockets
+            // with `newCapturedWebSocket`. The sample has no server, so it reports a few itself.
+            val realtime = NectoRealtimePlugin()
+            realtime.report("Chat", NectoRealtimePlugin.Direction.STATE, "connect")
+            realtime.report("Chat", NectoRealtimePlugin.Direction.OUTBOUND, """{"type":"hello"}""")
+            realtime.report("Chat", NectoRealtimePlugin.Direction.INBOUND, """{"type":"welcome","unread":3}""")
 
             NectoAndroid.start(
                 this,
@@ -70,6 +80,8 @@ class SampleApp : Application() {
                     ExampleTelemetry.performance(this),
                     NectoDataStorePreferencesPlugin(mapOf("settings" to settings)),
                     NectoFilesPlugin(this),
+                    NectoSQLitePlugin(this),
+                    realtime,
                     NectoAndroidControlPlugin(this),
                 ),
             )
@@ -96,6 +108,18 @@ class SampleApp : Application() {
         )
         File(documents, "notes.txt").writeText("Notes the app wrote for itself.\n")
         File(documents, "cache.bin").writeBytes(ByteArray(512) { (it % 251).toByte() })
+    }
+
+    /** A small database so the SQLite panel has tables to show on a fresh install. */
+    private fun seedDatabase() {
+        val file = getDatabasePath("sample.db")
+        if (file.exists()) return
+        file.parentFile?.mkdirs()
+        SQLiteDatabase.openOrCreateDatabase(file, null).use { db ->
+            db.execSQL("CREATE TABLE orders (id INTEGER PRIMARY KEY, item TEXT NOT NULL, amount INTEGER, created_at TEXT)")
+            db.execSQL("INSERT INTO orders (item, amount, created_at) VALUES ('Coffee', 4500, '2026-11-20'), ('Bagel', 3800, '2026-11-21')")
+            db.execSQL("CREATE VIEW recent_orders AS SELECT item, amount FROM orders ORDER BY created_at DESC")
+        }
     }
 
     /**

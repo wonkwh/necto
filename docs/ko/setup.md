@@ -190,6 +190,9 @@ dependencies {
 | `necto-process-metric-plugin` | 프로세스 지표 자동 수집 |
 | `necto-ui-control-plugin` | View와 Jetpack Compose의 UI 조회·조작 |
 | `necto-okhttp-capture-plugin` | OkHttp 요청 자동 기록 |
+| `necto-sqlite-plugin` | SQLite 데이터베이스 읽기 전용 조회 |
+| `necto-realtime-plugin` | 소켓, Bluetooth, 스트림 메시지를 직접 보고 |
+| `necto-okhttp-websocket-capture-plugin` | `newCapturedWebSocket`으로 연 OkHttp WebSocket 기록 |
 
 ### Release 빌드에서 제외하기
 

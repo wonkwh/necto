@@ -35,7 +35,7 @@ subprocess.run([
 ], check=True)
 
 expected = {"bridge": set(), "network": {"network-logger"}, "datastore": {"preferences"}, "control": {"control"}}
-expected["all"] = {"event-log", "network-logger", "files", "performance-monitor", "preferences", "control"}
+expected["all"] = {"event-log", "network-logger", "files", "performance-monitor", "preferences", "control", "sqlite", "realtime"}
 for flavor, panels in expected.items():
     apk = next((consumer / f"build/outputs/apk/{flavor}/debug").glob("*.apk"))
     with zipfile.ZipFile(apk) as archive:

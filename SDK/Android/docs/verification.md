@@ -14,6 +14,8 @@ What was checked, and how to check it again. Update it when behaviour changes.
 | `necto-performance-plugin`, `necto-process-metric-plugin` | Custom series and budgets, failing sampler cleanup and initial frame-rate availability |
 | `necto-ui-control-plugin` | Geometry, Views and Compose discovery/actions, cancellation, coverage and other-window focus |
 | `necto-datastore-preferences-plugin` | Numeric precision/range preservation and string-set round trips |
+| `necto-sqlite-plugin` | Databases found by header, tables and row counts, exact large integers, truncation, refused writes and ATTACH, path containment |
+| `necto-realtime-plugin`, `necto-okhttp-websocket-capture-plugin` | Newest-first listing, per-channel capacity, binary folding, and both directions and state of a real OkHttp WebSocket |
 | `sample` | Every selected plugin's packaged manifest validates and its panel loads |
 
 `script/test-android-artifacts` checks that every plugin owns its panel, the bridge
@@ -21,7 +23,7 @@ carries no feature implementation or panel, and no SDK AAR declares a permission
 `script/test-android-consumer` publishes the artifacts to a local repository and builds
 five independent minified consumers. The bridge consumer has no plugins; OkHttp,
 DataStore and Control consumers resolve only their selected feature; an all-plugins
-consumer resolves all eleven SDK modules. None includes
+consumer resolves all fourteen SDK modules. None includes
 Compose, and release builds have no Necto dependency. The fixture's bridge release
 also compiles to catch SDK references accidentally placed in shared sources.
 `script/test-android-consumer --jitpack <tag-or-commit>` runs the same consumer checks

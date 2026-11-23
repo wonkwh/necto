@@ -1,0 +1,4 @@
+src-tauri/target/
+src-tauri/gen/
+# Staged by CI for externalBin; built from src/bin/necto-cli.rs.
+src-tauri/binaries/
