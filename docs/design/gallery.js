@@ -937,6 +937,14 @@ const editorRows = [
   ["Data", "example.pushToken",
     `<span class="necto-caption">412 B of binary &mdash; not editable</span>
      <button type="button" class="necto-button">Copy as base64</button>`],
+  ["Data", "example.savedCard",
+    `<div style="display:flex; flex-direction:column; gap:6px; width:380px">
+      <pre class="necto-code">{
+  "addedAt" : "2026-07-29T07:38:02Z",
+  "ssid" : "Office"
+}</pre>
+      <span class="necto-caption">Decoded from Data &mdash; not editable from here</span>
+    </div>`],
 ];
 
 document.getElementById("preferences-editors").innerHTML = `
@@ -1001,6 +1009,100 @@ document.getElementById("files").innerHTML = `
           <button type="button" class="necto-button">Save to Mac…</button>
           <button type="button" class="necto-button necto-button-quiet necto-button-danger" style="margin-left:auto">Delete</button>
         </div>
+      </div>
+    </aside>
+  </div>`;
+
+const sqliteTables = [
+  { name: "large_orders", meta: "view" },
+  { name: "orders", meta: "3", on: true },
+];
+
+document.getElementById("sqlite").innerHTML = `
+  <div class="necto-toolbar">
+    <select class="necto-field" style="flex:0 1 360px; max-width:360px" aria-label="Database">
+      <option>Library/orders.sqlite</option>
+    </select>
+    <button type="button" class="necto-button necto-button-quiet">Refresh</button>
+    <span class="necto-caption">12.0 kB · modified 2026-07-29 16:38:02</span>
+  </div>
+  <div style="display:grid; grid-template-columns:220px 1fr; height:320px">
+    <div style="overflow:auto; border-right:1px solid var(--necto-border)">
+      <nav class="necto-tree">${sqliteTables.map((t) => `
+        <button type="button" class="necto-tree-row" aria-selected="${Boolean(t.on)}">
+          <span class="necto-tree-twist"></span>
+          <span class="necto-tree-name">${t.name}</span>
+          <span class="necto-tree-meta">${t.meta}</span>
+        </button>`).join("")}</nav>
+    </div>
+    <section style="display:grid; grid-template-rows:auto 1fr; min-width:0">
+      <div style="display:grid; gap:var(--necto-space-2); padding:var(--necto-space-2); border-bottom:1px solid var(--necto-border)">
+        <textarea class="necto-field" style="height:84px; font-family:var(--necto-font-mono)" aria-label="SQL">SELECT * FROM "orders"</textarea>
+        <div style="display:flex; gap:var(--necto-space-2); align-items:center">
+          <button type="button" class="necto-button necto-button-primary">Run</button>
+          <select class="necto-field" style="width:auto" aria-label="Row limit"><option>200 rows</option></select>
+          <span class="necto-caption">3 rows · 1 ms</span>
+        </div>
+      </div>
+      <div style="overflow:auto">
+        <table class="necto-table" style="font-family:var(--necto-font-mono)">
+          <thead><tr><th>id</th><th>item</th><th>total</th><th>note</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Coffee beans</td><td>18900</td><td style="color:var(--necto-text-secondary); font-style:italic">NULL</td></tr>
+            <tr><td>2</td><td>Filter papers</td><td>4500</td><td>gift</td></tr>
+            <tr><td>3</td><td>Kettle</td><td>59000</td><td style="color:var(--necto-text-secondary); font-style:italic">NULL</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>`;
+
+const realtimeRows = [
+  { time: "16:38:02.418", channel: "WS api.example.com/chat", dir: "in", tone: "ok", arrow: "↓", text: '{"type":"message","from":"mina","body":"on my way"}', on: true },
+  { time: "16:38:02.120", channel: "WS api.example.com/chat", dir: "out", tone: "info", arrow: "↑", text: '{"type":"typing"}' },
+  { time: "16:38:01.902", channel: "BLE", dir: "in", tone: "ok", arrow: "↓", text: "value 2A37 0x0648" },
+  { time: "16:38:01.330", channel: "Files", dir: "in", tone: "ok", arrow: "↓", text: "binary ×12, 1.2 MiB" },
+  { time: "16:38:00.004", channel: "WS api.example.com/chat", dir: "state", tone: "idle", arrow: "•", text: "connect" },
+];
+
+document.getElementById("realtime").innerHTML = `
+  <div class="necto-toolbar">
+    <input class="necto-field" style="max-width:360px" type="search" placeholder="Search channel or message" aria-label="Search" />
+    <select class="necto-field" style="flex:0 1 260px; max-width:260px" aria-label="Filter by channel"><option>All channels</option></select>
+    <span class="necto-badge">5</span>
+    <span style="margin-left:auto"></span>
+    <button type="button" class="necto-button necto-button-quiet necto-button-danger">Clear</button>
+  </div>
+  <div style="display:flex; height:300px">
+    <div style="flex:1; overflow:auto; min-width:0">
+      <table class="necto-table" style="table-layout:fixed">
+        <thead><tr>
+          <th class="necto-numeric" style="width:116px">Time</th><th style="width:200px">Channel</th><th style="width:44px"></th><th>Message</th>
+        </tr></thead>
+        <tbody>${realtimeRows.map((r) => `
+          <tr aria-selected="${Boolean(r.on)}">
+            <td class="necto-numeric">${r.time}</td>
+            <td><span class="necto-badge" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${r.channel}</span></td>
+            <td><span class="necto-status necto-status-${r.tone}">${r.arrow}</span></td>
+            <td><span style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--necto-text-secondary)">${r.text.replaceAll("<", "&lt;")}</span></td>
+          </tr>`).join("")}</tbody>
+      </table>
+    </div>
+    <aside class="necto-detail" style="width:300px; border-top:0; border-left:1px solid var(--necto-border)">
+      <div class="necto-detail-title">
+        <span class="necto-status necto-status-ok">↓</span>
+        <span class="necto-badge">WS api.example.com/chat</span>
+        <span class="necto-detail-title-url">16:38:02.418</span>
+        <button type="button" class="necto-button necto-button-quiet" aria-label="Close">✕</button>
+      </div>
+      <div class="necto-detail-body">
+        <p class="necto-caption">52 B</p>
+        <p class="necto-section-title">Body</p>
+        <pre class="necto-code">{
+  "body": "on my way",
+  "from": "mina",
+  "type": "message"
+}</pre>
       </div>
     </aside>
   </div>`;

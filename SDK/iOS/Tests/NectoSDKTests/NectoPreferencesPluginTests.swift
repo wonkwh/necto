@@ -66,6 +66,43 @@ struct NectoPreferencesPluginTests {
         #expect(rendered.contains("createdAt"))
     }
 
+    private struct Card: Codable {
+        let ssid: String
+        let addedAt: Date
+        let token: Data
+    }
+
+    /// A Codable saved with `PropertyListEncoder` is a plist, so its fields can show
+    /// without the type that wrote it.
+    @Test("shows Data that holds a plist or JSON decoded")
+    func decodesCodableData() throws {
+        let card = Card(ssid: "Office", addedAt: Date(timeIntervalSince1970: 0), token: Data([0xFF, 0x00]))
+        let plist = try PropertyListEncoder().encode([card])
+
+        #expect(NectoPreferencesPlugin.describe(plist) == """
+        [
+          {
+            "addedAt" : "1970-01-01T00:00:00Z",
+            "ssid" : "Office",
+            "token" : "<2 bytes>"
+          }
+        ]
+        """)
+        #expect(NectoPreferencesPlugin.describe(Data(#"{"id":9007199254740993}"#.utf8)) == """
+        {
+          "id" : "9007199254740993"
+        }
+        """)
+        #expect(NectoPreferencesPlugin.typeName(plist) == "Data")
+    }
+
+    @Test("describes opaque or oversized Data by size")
+    func describesOpaqueDataBySize() {
+        #expect(NectoPreferencesPlugin.describe(Data([0x89, 0x50, 0x4E, 0x47])) == "4 bytes")
+        let large = Data(("\"" + String(repeating: "a", count: PreferencesDataDecoder.limit) + "\"").utf8)
+        #expect(NectoPreferencesPlugin.describe(large) == "\(large.count) bytes")
+    }
+
     /// A list of two hundred keys should not carry two hundred values, and one of them
     /// is usually a token.
     @Test("keeps a long value out of the list and says it did")

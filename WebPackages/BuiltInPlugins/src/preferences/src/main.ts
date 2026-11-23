@@ -6,7 +6,7 @@ import "./style.css";
 
 import { createDetailPane, necto, isNectoBridgeError, type NectoJSONValue } from "@necto/bridge";
 import { t } from "./localization";
-import { arrayItems, dictionaryFields, display, element, numberValue } from "./model";
+import { arrayItems, dictionaryFields, display, element, isDecodedData, numberValue } from "./model";
 
 interface Entry {
   key: string;
@@ -406,6 +406,15 @@ function detailBody(): Node[] {
   /// Writing base64 back through a text box is how a token gets corrupted, and a
   /// container that cannot be read here cannot be saved from here without losing it.
   function readOnly(): Node[] {
+    if (detail && isDecodedData(detail.type, detail.value)) {
+      return [
+        pairs(),
+        valueTitle(),
+        el("pre", { class: "necto-code" }, [detail.value]),
+        el("p", { class: "necto-caption" }, [t("Decoded from Data — not editable from here")]),
+        actions([]),
+      ];
+    }
     return [
       pairs(),
       valueTitle(),

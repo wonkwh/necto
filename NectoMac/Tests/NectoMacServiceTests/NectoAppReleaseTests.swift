@@ -18,33 +18,33 @@ struct NectoAppReleaseTests {
 
     @Test("pins the DMG and checksum to the discovered version", arguments: ["0.1.0", "0.1.1", "0.4.3"])
     func exactAssets(version: String) throws {
-        #expect(NectoAppRelease.repository == "toss/necto")
-        #expect(NectoAppRelease.pageURL.absoluteString == "https://github.com/toss/necto/releases")
-        let tagURL = try #require(URL(string: "https://github.com/toss/necto/releases/tag/\(version)"))
+        #expect(NectoAppRelease.repository == "wonkwh/necto")
+        #expect(NectoAppRelease.pageURL.absoluteString == "https://github.com/wonkwh/necto/releases")
+        let tagURL = try #require(URL(string: "https://github.com/wonkwh/necto/releases/tag/\(version)"))
         #expect(try NectoAppRelease.version(from: tagURL).description == version)
         let release = try release(version: version)
         #expect(release.version.description == version)
-        #expect(release.imageURL.absoluteString == "https://github.com/toss/necto/releases/download/\(version)/Necto-\(version).dmg")
+        #expect(release.imageURL.absoluteString == "https://github.com/wonkwh/necto/releases/download/\(version)/Necto-\(version).dmg")
         #expect(release.imageSHA256 == String(repeating: "a1", count: 32))
     }
 
     @Test("rejects unexpected release locations", arguments: [
         "https://github.com/toss/toss-necto/releases/tag/0.1.0",
         "https://github.com/other/necto/releases/tag/0.1.0",
-        "https://github.com/toss/necto/releases/latest",
-        "https://github.com/toss/necto/releases/tag/v0.1.0",
-        "https://github.com/toss/necto/releases/tag/0.1.0-beta.1",
-        "https://github.com/toss/necto/releases/tag/0.1.0+build.1",
-        "https://github.com/toss/necto/releases/tag/00.1.0",
-        "https://github.com/toss/necto/releases/tag/0.1.0/",
-        "https://github.com/toss/necto/releases/tag/%30.1.0",
-        "https://github.com/toss/necto/releases/tag/0.1.0?download=1",
-        "https://github.com/toss/necto/releases/tag/0.1.0#fragment",
-        "https://github.com/toss/necto/releases/tag/../0.1.0",
-        "https://github.com.evil.test/toss/necto/releases/tag/0.1.0",
-        "https://user:password@github.com/toss/necto/releases/tag/0.1.0",
-        "http://github.com/toss/necto/releases/tag/0.1.0",
-        "https://github.com:8443/toss/necto/releases/tag/0.1.0",
+        "https://github.com/wonkwh/necto/releases/latest",
+        "https://github.com/wonkwh/necto/releases/tag/v0.1.0",
+        "https://github.com/wonkwh/necto/releases/tag/0.1.0-beta.1",
+        "https://github.com/wonkwh/necto/releases/tag/0.1.0+build.1",
+        "https://github.com/wonkwh/necto/releases/tag/00.1.0",
+        "https://github.com/wonkwh/necto/releases/tag/0.1.0/",
+        "https://github.com/wonkwh/necto/releases/tag/%30.1.0",
+        "https://github.com/wonkwh/necto/releases/tag/0.1.0?download=1",
+        "https://github.com/wonkwh/necto/releases/tag/0.1.0#fragment",
+        "https://github.com/wonkwh/necto/releases/tag/../0.1.0",
+        "https://github.com.evil.test/wonkwh/necto/releases/tag/0.1.0",
+        "https://user:password@github.com/wonkwh/necto/releases/tag/0.1.0",
+        "http://github.com/wonkwh/necto/releases/tag/0.1.0",
+        "https://github.com:8443/wonkwh/necto/releases/tag/0.1.0",
     ])
     func refusesLocations(text: String) throws {
         let url = try #require(URL(string: text))
@@ -81,7 +81,7 @@ struct NectoAppReleaseTests {
     ])
     func newerVersion(current: String, latest: String, expected: Bool) throws {
         let installed = try #require(NectoSemanticVersion(current))
-        let url = try #require(URL(string: "https://github.com/toss/necto/releases/tag/\(latest)"))
+        let url = try #require(URL(string: "https://github.com/wonkwh/necto/releases/tag/\(latest)"))
         #expect(try (NectoAppRelease.version(from: url) > installed) == expected)
     }
 

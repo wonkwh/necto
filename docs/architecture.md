@@ -51,11 +51,14 @@ handlers and manifest bindings, not a feature-specific host adapter or wire mess
 | `NectoNetworkPlugin` | Network records and panel | Automatic traffic capture |
 | `NectoEventsPlugin` | Application events and panel | Automatic event capture |
 | `NectoFilesPlugin` | File browsing and panel | Other plugins |
+| `NectoSQLitePlugin` | Read-only SQLite queries and panel | Writes, or files outside the sandbox home |
 | `NectoPreferencesPlugin` | Preferences access and panel | Other plugins |
 | `NectoPerformancePlugin` | Performance readings and panel | Automatic process sampling |
 | `NectoUIControlPlugin` | UI inspection, interaction and iOS touch runtime | Other plugins |
 | `NectoProcessMetricPlugin` | Optional CPU, memory, FPS and thread sampling | Starting unless the app registers it and a reader subscribes |
 | `NectoURLSessionCapturePlugin` | One capture mechanism, for apps using `URLSession` | Capture that an app cannot disable |
+| `NectoRealtimePlugin` | Socket, Bluetooth and stream messages and panel | Automatic capture |
+| `NectoWebSocketCapturePlugin`, `NectoBluetoothCapturePlugin` | Capture mechanisms for apps using `URLSessionWebSocketTask` or CoreBluetooth | Capture an app did not install |
 | `necto-core`, `necto-android` | The Android bridge: protocol, runtime, ADB listener and app identity | Feature implementations or panels |
 | `SDK/Plugins/<Name>` | One plugin on both platforms: its built panel, Swift target and Gradle module | Another plugin |
 | `Necto/` | Shell UI and the plugin host | Feature screens |

@@ -5,6 +5,7 @@
 import NectoModel
 import NectoProcessMetricPlugin
 import Foundation
+import SQLite3
 import Testing
 
 @testable import NectoNetworkPlugin
@@ -12,6 +13,8 @@ import Testing
 @testable import NectoFilesPlugin
 @testable import NectoPreferencesPlugin
 @testable import NectoPerformancePlugin
+@testable import NectoRealtimePlugin
+@testable import NectoSQLitePlugin
 @testable import NectoUIControlPlugin
 @testable import NectoSDK
 
@@ -171,6 +174,40 @@ struct ManifestContractTests {
         try await check(plugin, "necto.device.files.delete", in: "files", input: ["root": "test", "path": "note.txt"])
     }
 
+    @Test("what the sqlite plugin returns is what its manifest promised")
+    func sqliteMatchesItsManifest() async throws {
+        let home = FileManager.default.temporaryDirectory
+            .appending(path: "necto-sqlite-contract-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: home) }
+        var handle: OpaquePointer?
+        try #require(sqlite3_open(home.appending(path: "app.db").path, &handle) == SQLITE_OK)
+        let seeded = sqlite3_exec(handle, "CREATE TABLE items (id INTEGER, name TEXT); INSERT INTO items VALUES (1, 'a'), (2, NULL);", nil, nil, nil)
+        sqlite3_close(handle)
+        try #require(seeded == SQLITE_OK)
+
+        let plugin = NectoSQLitePlugin(home: home)
+        try await check(plugin, "necto.device.sqlite.databases", in: "sqlite")
+        try await check(plugin, "necto.device.sqlite.tables", in: "sqlite", input: ["database": "app.db"])
+        try await check(
+            plugin,
+            "necto.device.sqlite.query",
+            in: "sqlite",
+            input: ["database": "app.db", "sql": "SELECT * FROM items", "limit": 1]
+        )
+    }
+
+    @Test("what the realtime plugin returns is what its manifest promised")
+    func realtimeMatchesItsManifest() async throws {
+        let plugin = NectoRealtimePlugin()
+        plugin.report(channel: "Chat", direction: .outbound, text: #"{"hello":1}"#)
+        plugin.reportBinary(channel: "Files", direction: .inbound, byteCount: 64)
+
+        try await check(plugin, "necto.device.realtime.list", in: "realtime", input: ["limit": 10])
+        try await check(plugin, "necto.device.realtime.detail", in: "realtime", input: ["id": "1"])
+        try await check(plugin, "necto.device.realtime.clear", in: "realtime")
+    }
+
     @Test("Swipe limits and input mode are validated")
     func controlInputValidation() throws {
         let operations = try operations(of: "control")
@@ -242,7 +279,7 @@ struct ManifestContractTests {
     /// contract while promising nothing.
     @Test("every shipped operation says what it takes and returns", arguments: [
         "event-log", "files", "network-logger", "performance-monitor", "plugin-sample", "preferences", "shell-demo",
-        "control",
+        "control", "sqlite", "realtime",
     ])
     func schemasSaySomething(plugin: String) throws {
         for (key, operation) in try operations(of: plugin) {

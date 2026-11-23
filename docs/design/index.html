@@ -163,7 +163,8 @@
           A value is edited in its own shape. A Bool is a switch, a number is a number
           field, and a collection is rows &mdash; one element per field, never a JSON
           blob to retype. An element that is itself structured is one line of JSON in
-          its row. Data is not editable; it is described and copied.
+          its row. Data is not editable; a plist or JSON inside it is shown decoded, anything
+          else is described and copied.
         </p>
         <div class="frame" id="preferences-editors"></div>
       </section>
@@ -172,6 +173,18 @@
         <h3>Files</h3>
         <p class="lede">The app's own container. A tree that has to stay readable at depth, and sizes that line up.</p>
         <div class="frame" id="files"></div>
+      </section>
+
+      <section>
+        <h3>SQLite</h3>
+        <p class="lede">The app's databases, read-only. Tables on the left with their row counts; the query and its result share the rest.</p>
+        <div class="frame" id="sqlite"></div>
+      </section>
+
+      <section>
+        <h3>Realtime</h3>
+        <p class="lede">Messages on long-lived channels as they happen. The channel is a badge so a busy one is easy to tell apart; binary bursts fold into one row.</p>
+        <div class="frame" id="realtime"></div>
       </section>
 
       <section>
