@@ -8,7 +8,7 @@ import { appendFileSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const repository = "toss/necto";
+const repository = "wonkwh/necto";
 const apiRoot = `repos/${repository}`;
 const digest = (data) => `sha256:${createHash("sha256").update(data).digest("hex")}`;
 

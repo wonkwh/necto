@@ -19,7 +19,7 @@ wrapper = str(sdk / "gradlew")
 common = ["--no-daemon", "--console=plain", *extra]
 if args.jitpack:
     repository = "https://jitpack.io"
-    group = "com.github.toss.necto"
+    group = "com.github.wonkwh.necto"
     version = args.jitpack
 else:
     subprocess.run([wrapper, "-p", str(sdk), *common, "publishAllPublicationsToConsumerTestRepository"], check=True)

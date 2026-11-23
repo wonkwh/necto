@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.repository == 'toss/necto' && github.ref == 'refs/heads/main'
+    if: github.repository == 'wonkwh/necto' && github.ref == 'refs/heads/main'
     runs-on: macos-26
     timeout-minutes: 45
     permissions:
@@ -119,9 +119,9 @@ jobs:
       - name: Build the release on JitPack
         run: |
           curl --fail --silent --show-error --max-time 900 \
-            "https://jitpack.io/com/github/toss/necto/$VERSION/build.log" | tail -n 20
-          status="$(curl --fail --silent --show-error https://jitpack.io/api/builds/com.github.toss/necto \
-            | jq -r --arg version "$VERSION" '.["com.github.toss"].necto[$version]')"
+            "https://jitpack.io/com/github/wonkwh/necto/$VERSION/build.log" | tail -n 20
+          status="$(curl --fail --silent --show-error https://jitpack.io/api/builds/com.github.wonkwh/necto \
+            | jq -r --arg version "$VERSION" '.["com.github.wonkwh"].necto[$version]')"
           echo "JitPack build of $VERSION: $status"
           [[ "$status" == ok ]]
       - name: Check selective consumers against JitPack

@@ -7,7 +7,7 @@ import NectoModel
 
 /// Public app updates have a fixed source and never borrow a plugin's gh login.
 public struct NectoAppRelease: Sendable {
-    public static let repository = "toss/necto"
+    public static let repository = "wonkwh/necto"
     public static let pageURL = URL(string: "https://github.com/\(repository)/releases")!
     public let version: NectoSemanticVersion
     public let imageURL: URL

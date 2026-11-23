@@ -156,8 +156,8 @@ test("a release publishes the tag and artifacts to the official repository", (t)
   const release = calls.find(([name]) => name === "gh");
   assert.ok(release, "the release must be published");
   assert.deepEqual(calls.find(([name, action]) => name === "git" && action === "push"),
-    ["git", "push", "https://github.com/toss/necto.git", version]);
-  assert.equal(release[release.indexOf("--repo") + 1], "toss/necto");
+    ["git", "push", "https://github.com/wonkwh/necto.git", version]);
+  assert.equal(release[release.indexOf("--repo") + 1], "wonkwh/necto");
   assert.ok(release.includes("--verify-tag"));
   assert.deepEqual(
     release.filter((argument) => argument.startsWith("Build/")).sort(),

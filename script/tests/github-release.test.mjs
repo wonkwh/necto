@@ -13,8 +13,8 @@ import { release } from "../github-release.mjs";
 const head = "a".repeat(40);
 const older = "b".repeat(40);
 const version = "0.1.0";
-const root = "repos/toss/necto/";
-const download = "[**Download Necto**](https://github.com/toss/necto/releases/download/0.1.0/Necto-0.1.0.dmg)";
+const root = "repos/wonkwh/necto/";
+const download = "[**Download Necto**](https://github.com/wonkwh/necto/releases/download/0.1.0/Necto-0.1.0.dmg)";
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
 function fixture(t, options = {}) {
@@ -61,7 +61,7 @@ function fixture(t, options = {}) {
       if (path === "releases") { state.draft = { id: 7, body: "Generated release notes", ...body }; return ok(state.draft); }
       if (path === "releases/7/assets?per_page=100") return ok(state.assets);
       if (path === "releases/7" && method === "PATCH") {
-        Object.assign(state.draft, body, { html_url: "https://github.com/toss/necto/releases/tag/0.1.0" });
+        Object.assign(state.draft, body, { html_url: "https://github.com/wonkwh/necto/releases/tag/0.1.0" });
         return ok(state.draft);
       }
       if (path === "releases/7") return ok(state.draft);
@@ -83,7 +83,7 @@ test("preparation selects main or an existing tag without mutating GitHub", (t) 
 
 test("publishing creates a tag and draft, verifies all four uploads, then publishes", (t) => {
   const f = fixture(t);
-  assert.equal(release("publish", version, head, f), "https://github.com/toss/necto/releases/tag/0.1.0");
+  assert.equal(release("publish", version, head, f), "https://github.com/wonkwh/necto/releases/tag/0.1.0");
   assert.equal(f.state.tag, head);
   assert.equal(f.state.draft.draft, false);
   assert.equal(f.state.draft.body, `${download}\n\nGenerated release notes`);
