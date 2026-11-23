@@ -12,7 +12,7 @@ struct NectoUpdateDownloadTests {
     @Test("reads a release tag using HEAD without following the redirect")
     func latestRelease() async throws {
         let version = try await serve(
-            "HTTP/1.1 302 Found\r\nLocation: https://github.com/toss/necto/releases/tag/0.1.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+            "HTTP/1.1 302 Found\r\nLocation: https://github.com/wonkwh/necto/releases/tag/0.1.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
             expectedMethod: "HEAD"
         ) { url in
             try await NectoAppRelease.latestVersion(at: url)
