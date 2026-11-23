@@ -53,6 +53,9 @@ without registering any plugins.
 | `necto-process-metric-plugin` | Optional Android process sampling: `NectoProcessMetricPlugin(context)`; depends on `necto-performance-plugin` |
 | `necto-ui-control-plugin` | Views and optional Compose UI Control: `NectoAndroidControlPlugin(context)` |
 | `necto-datastore-preferences-plugin` | DataStore Preferences and panel: `NectoDataStorePreferencesPlugin(stores)` |
+| `necto-sqlite-plugin` | SQLite databases under the data directory, read-only: `NectoSQLitePlugin(context)` |
+| `necto-realtime-plugin` | Socket, Bluetooth and stream message reporting and panel: `NectoRealtimePlugin` |
+| `necto-okhttp-websocket-capture-plugin` | Optional OkHttp WebSocket capture: `OkHttpClient.newCapturedWebSocket`; depends on `necto-realtime-plugin` |
 
 `necto-plugin-support` is an implementation dependency shared by the feature modules.
 It contains resource loading, stream fan-out and text decoding helpers, with no panel

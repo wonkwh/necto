@@ -212,6 +212,9 @@ only its own code and panel, plus its declared dependencies.
 | `necto-process-metric-plugin` | Automatic process metrics |
 | `necto-ui-control-plugin` | UI inspection and interaction, for Views and Jetpack Compose |
 | `necto-okhttp-capture-plugin` | Automatic OkHttp recording |
+| `necto-sqlite-plugin` | SQLite databases, read-only |
+| `necto-realtime-plugin` | Report socket, Bluetooth and stream messages |
+| `necto-okhttp-websocket-capture-plugin` | OkHttp WebSocket recording through `newCapturedWebSocket` |
 
 ### Keeping it out of release builds
 
